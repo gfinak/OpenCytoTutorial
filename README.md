@@ -1,4 +1,4 @@
 OpenCytoTutorial
 ================
 
-A tutorial on installing and using OpenCyto
+Tutorial slides on installing and using OpenCyto, a robust automated gating framework in R.
