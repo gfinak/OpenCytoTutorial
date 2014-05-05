@@ -77,6 +77,9 @@ Twitter: [\@OpenCyto](http://www.twitter.com/OpenCyto)
 ```{r libs,echo=FALSE,message=FALSE,warning=FALSE}
 require(openCyto)
 require(data.table)
+require(reshape2)
+require(clue)
+require(ggplot2)
 ```
 
 ```{r echo=1,results='markup',results='hide'}
@@ -99,8 +102,16 @@ Groups in Workspace
 
 ## Import Manual Gating (parseWorkspace) {.smaller}
 Create a gating set of manual gates.
-```{r parseWorkspace,echo=TRUE,results='hide',eval=FALSE}
-gating_set<-parseWorkspace(ws,name="0882 Samples",path="data/FCS/",isNcdf=TRUE)
+```{r parseWorkspace_echo,echo=TRUE,eval=FALSE}
+  gating_set<-parseWorkspace(ws,name="0882 Samples",path="data/FCS/",isNcdf=TRUE)
+```
+```{r parseWorkspace,echo=FALSE,results='hide',eval=TRUE}
+if(!file.exists("data/manual_gating/")){
+  gating_set<-parseWorkspace(ws,name="0882 Samples",path="data/FCS/",isNcdf=TRUE)
+  save_gs(gating_set,path="data/manual_gating")
+}else{
+  gating_set<-load_gs("data/manual_gating/")
+}
 ```
 <pre>
 Parsing 76 samples
@@ -119,10 +130,7 @@ To reload it, use 'load_gs' function
 </pre>  
 The archived gating set contains all the information on <emph>transformation, compensation, single-cell events, and gates</emph> and can be *shared with collaborators*.
 
-## Visualizing the Gating Layout  (plotGate)
-```{r loadgs,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
-gating_set<-load_gs("data/manual_gating/")
-```
+## Visualizing the Gating Layout  (plotGate)   
 ```{r vis_manual_gates,echo=TRUE,eval=TRUE,results='hide',cache=TRUE,message=FALSE,warning=FALSE,fig.align='center',fig.cap='Layout of manual gates'}
 plotGate(gating_set[[1]],xbin=16) # Binning for faster plotting
 ```
@@ -232,12 +240,50 @@ grid.arrange(arrangeGrob(p1,p2,ncol=2))
 ```
 Stats and gates are comparable, could be tweaked if necessary, but importantly it's reproducible. Always generate the same result.
 
-## Extract Stats and Compare
+## Extract Stats and Compare {.smaller}
+```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=TRUE,fig.align='center',out.width=800}
+auto_stats<-getPopStats(auto_gating,statistic="count")
+manual_stats<-getPopStats(gating_subset,statistic="count")
+gates_to_remove<-names(which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="+"))>1)))
+gates_to_remove<-c(gates_to_remove,names(which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="-"))>1))))
+for(i in gates_to_remove){
+  try(Rm(i,gating_subset))
+}
+.getCounts<-function(stat="count"){
+  auto_stats<-getPopStats(auto_gating,statistic=stat)
+  manual_stats<-getPopStats(gating_subset,statistic=stat)
+  #combine
+  melted_auto<-melt(auto_stats)
+  melted_manual<-melt(manual_stats)
+  setnames(melted_manual,c("population","file","counts"))
+  setnames(melted_auto,c("population","file","counts"))
+  melted_auto<-subset(melted_auto,!population%in%c("/boundary","/boundary/singlet/viable/nonNeutro","/boundary/singlet/viable/nonNeutro/DebrisGate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+/cd4neg","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-/cd4pos","/boundary/singlet/viable/nonDebris","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-","/boundary/singlet" ))
+  melted_auto$population<-factor(melted_auto$population)
+  melted_manual<-subset(melted_manual,!population%in%c("/S/Lv/L/Not 4+","/S/Lv/L/3+/8+/IFN\\IL2","/S/Lv/L/3+/8+/IFN+IL2-","/S/Lv/L/3+/4+/IFN\\IL2","/S/Lv/L/3+/4+/IFN+IL2-","/S/Lv/L/3+/8+/IFN-IL2+","/S/Lv/L/3+/4+/IFN-IL2+","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-"))
+  melted_manual$population<-factor(melted_manual$population)
+  D<-adist((levels(melted_auto$population)),(levels(melted_manual$population)),ignore.case=TRUE,partial=TRUE)
+  D<-solve_LSAP(D)
+  levels(melted_auto$population)<-levels(melted_manual$population)[D]
+  merged<-rbind(cbind(melted_auto,method="auto"),cbind(melted_manual,method="manual"))
+  merged
+}
 
-```{r extract_stats,echo=TRUE,message=FALSE, warning=FALSE}
+merged_counts<-.getCounts(stat="count")
+merged_props<-.getCounts(stat="freq")
+  corr.coef<-cor(dcast(merged_counts,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
+  corr.coef.freq<-cor(dcast(merged_props,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
+
+et<-element_text(size=10)
+et2<-element_text(size=8)
+p1<-ggplot(dcast(merged_counts,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Count")+scale_x_log10("Autogating Population Count")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="none")+scale_color_discrete("Population")+geom_text(aes(x=10,y=100000,label=sprintf("rho=%s",signif(corr.coef[1,2],4))),data=data.frame(corr.coef))
+p2<-ggplot(dcast(merged_props,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Proportion")+scale_x_log10("Autogating Population Proportion")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="left")+scale_color_discrete("Population")+geom_text(aes(x=0.01,y=0.75,label=sprintf("rho=%s",signif(corr.coef.freq[1,2],4))),data=data.frame(corr.coef.freq))
+grid.draw(cbind(ggplotGrob(p1), ggplotGrob(p2), size="last"))
+```
+```{r extract_stats_echo,echo=TRUE,eval=FALSE}
 auto_stats<-getPopStats(auto_gating,statistic="count")
 manual_stats<-getPopStats(gating_subset,statistic="count")
 ```
+Differences in Perforin (which is incorrectly gated in the manual analysis), and in TNFa+, which we know is gated slightly differently in the manual gating.
 
 ## Online Resources
 
