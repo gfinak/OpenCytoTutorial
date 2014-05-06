@@ -1,0 +1,311 @@
+---
+title: "&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspOpenCyto Tutorial<br><font size=6>Robust and Reproducible Automated Gating
+  of Cytometry Data<br>Cyto 2014</font>"
+author: "Greg Finak, PhD<br>Staff Scientist<br>Vaccine and Infectious Disease Division,
+  Fred Hutchinson Cancer Research Center"
+date: "May 17, 2014"
+output:
+  ioslides_presentation:
+    fig_caption: yes
+    logo: resources/H.jpeg
+    widescreen: yes
+    pandoc_args: [
+      "-c", "mystyles.css",
+    ]
+  beamer_presentation:
+    fig_caption: yes
+    highlight: tango
+  revealjs_presentation:
+    highlight: tango
+---
+
+## What is OpenCyto?
+**Not an algorithm, but a <emph>*framework*</emph> for automated gating.**  
+
+**Goals**  
+
+* Easily build <emph>*reproducible gating pipelines*</emph>.   
+* <emph>*Use any gating algorithm*</emph> 
+    * interchange any algorithm at any step (support gating plugins)
+* <emph>Simple(r) pipeline template definitions</emph>
+    * Pipeline defined via text file (csv)
+    * Templates and code are <emph>*re-usable*</emph> for standardized assays and data.
+* <emph>Facilitate comparative analysis</emph>
+    * Import manually gated data from FlowJo workspaces
+* <emph>Scale to *large* data sets </emph>
+    * NetCDF support - data sets limited by disk space not RAM.
+
+## Overview {.smaller}
+```{r framework_figure, echo=FALSE,fig.cap='The OpenCyto Gating Framework is a collection of R/BioConductor packages for easily building reproducible flow data analysis pipelines.',message=FALSE,fig.align='center',cache=TRUE}
+require(png)
+require(grid)
+img<-readPNG("resources/Framework.png")
+grid.raster(img)
+```
+
+<p align="center">Raw data --> Preprocessing --> Annotation --> Gating --> Statistical analysis --> Output</p>
+
+## Getting Started | Installation
+
+**Requirements: R + Bioconductor**
+
+* Install *release version* of R from [CRAN](http://cran.r-project.org/).
+* Install *release version* of BioConductor from [bioconductor.org/install](http://www.bioconductor.org/install/)
+* Install OpenCyto and its dependencies
+    * Within R type the following:
+
+```{r eval=FALSE}
+require(BiocInstaller)  
+biocLite("openCyto")
+```
+
+This installs all the required packages.   
+<p class="smaller">
+Still have problems?
+[Bioconductor mailing list](https://stat.ethz.ch/mailman/listinfo/bioconductor)  
+Email: [Mike Jiang](wjiang2@fhcrc.org) or [Greg Finak](gfinak@fhcrc.org)  
+Twitter: [\@OpenCyto](http://www.twitter.com/OpenCyto)
+</p>
+
+
+
+## A Worked Example | Intracellular Cytokine Staining of Antigen-stimulated T-cells 
+
+* Full data set at Flowrepository.org [FR-FCM-ZZ7U](http://flowrepository.org/experiments/254/public_id)  
+* Batch 0882, 76 sample files, 13 compensation controls.
+
+```{r libs,echo=FALSE,message=FALSE,warning=FALSE}
+require(openCyto)
+require(data.table)
+require(reshape2)
+require(clue)
+require(ggplot2)
+```
+
+```{r echo=1,results='markup',results='hide'}
+ws<-openWorkspace("data/workspace/080 batch 0882.xml")
+ws
+```
+
+<pre>
+FlowJo Workspace Version  2.0 
+File location:  data/workspace 
+File name:  080 batch 0882.xml 
+Workspace is open. 
+Groups in Workspace
+          Name Num.Samples
+1  All Samples         158
+2   0882-L-080         157
+3        Comps          13
+4 0882 Samples          76
+</pre>
+
+## Import Manual Gating (parseWorkspace) {.smaller}
+Create a gating set of manual gates.
+```{r parseWorkspace_echo,echo=TRUE,eval=FALSE}
+  gating_set<-parseWorkspace(ws,name="0882 Samples",path="data/FCS/",isNcdf=TRUE)
+```
+```{r parseWorkspace,echo=FALSE,results='hide',eval=TRUE}
+if(!file.exists("data/manual_gating/")){
+  gating_set<-parseWorkspace(ws,name="0882 Samples",path="data/FCS/",isNcdf=TRUE)
+  save_gs(gating_set,path="data/manual_gating")
+}else{
+  gating_set<-load_gs("data/manual_gating/")
+}
+```
+<pre>
+Parsing 76 samples
+calling c++ parser...
+...
+</pre>
+We now have gated, compensated and transformed data in a <emph>*NetCDF*</emph> file represented in a <emph>*GatingSet*</emph> object.  We can save it for later use.   
+```{r eval=FALSE,echo=TRUE,results='hide'}
+save_gs(gating_set,path="data/manual_gating")
+```
+<pre>saving ncdf...
+saving tree object...
+saving R object...
+Done
+To reload it, use 'load_gs' function
+</pre>  
+The archived gating set contains all the information on <emph>transformation, compensation, single-cell events, and gates</emph> and can be *shared with collaborators*.
+
+## Visualizing the Gating Layout  (plotGate)   
+```{r vis_manual_gates,echo=TRUE,eval=TRUE,results='hide',cache=TRUE,message=FALSE,warning=FALSE,fig.align='center',fig.cap='Layout of manual gates'}
+plotGate(gating_set[[1]],xbin=16) # Binning for faster plotting
+```
+
+## Visualizing the Gating Tree  (plot)
+Calling `plot` on the gating set gives us a view of the tree.
+```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap=''}
+Rm("Not 4+/IFNg+",gating_set)
+plot(gating_set)
+```
+
+
+## Annotation {.smaller}
+We <emph>annotate</emph> our gating set from the <emph>keywords</emph> and <emph>flowrepository</emph>. We'll keep only the <emph>GAG</emph> and <emph>negative control</emph> stimulations
+```{r keyword,echo=c(2,3,4,8,9,10),eval=TRUE}
+getKeywords<-function(gs,kv){
+  r<-as.data.frame(do.call(cbind,lapply(kv,function(k){
+    keyword(gs,k)[1]
+  })))
+  data.table::setnames(r,"$FIL","name")
+  r
+}
+keyword_vars<-c("$FIL","Stim","Sample Order","EXPERIMENT NAME") #relevant keywords
+pd<-data.table(getKeywords(gating_set,keyword_vars)) #extract relevant keywords to a data table
+annotations<-data.table:::fread("data/workspace/pd_submit.csv") # read the annotations from flowrepository
+setnames(annotations,"File Name","name")
+setkey(annotations,"name")
+setkey(pd,"name")
+pd<-data.frame(annotations[pd]) #data.table style merge
+setnames(pd,c("Timepoint","Individual"),c("VISITNO","PTID"))
+pData(gating_set)<-pd #annotate
+gating_subset<-gating_set[subset(pd,!is.na(Condition))$name] #subset only the GAG and negctrl
+```
+```{r keywords_tbl,eval=TRUE,echo=FALSE,results='asis',cache=TRUE}
+knitr::kable(head(subset(na.omit(pd)[,c(1:5)],PTID%in%"080-17"),4),row.names = FALSE)
+```
+
+## Copy and save {.smaller}
+We want to perform automated gating of this data. 
+* We'll delete the existing nodes and re-save the data in a new gating set.
+```{r copy_and_save,eval=FALSE,message=FALSE,warining=FALSE,results='hide'}
+auto_gating<-clone(gating_subset)
+Rm("S",auto_gating)
+save_gs(auto_gating,path="data/autogating")
+```
+```{r load_empty,eval=TRUE,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
+if(!file.exists("data/autogating")){
+  auto_gating<-clone(gating_subset)
+  try(Rm("S",auto_gating))
+  save_gs(auto_gating,path="data/autogating")
+}else{
+  auto_gating<-load_gs("data/autogating/")
+}
+```
+
+## Costructing a Template - I {.smaller}    
+The text-file template looks like the following:
+
+```{r read_template,echo=FALSE,results='asis',cache=TRUE}
+template<-read.csv("data//template//gt_080.csv",as.is=FALSE,allowEscapes=TRUE,stringsAsFactors=FALSE)
+template$collapseDataForGating[is.na(template$collapseDataForGating)]<-" "
+Kmisc::htmlTable(data.frame(template)[1:10,c(1:5,8,9)])
+```
+
+## Costructing a Template - II {.smaller}
+Each row defines a cell population  
+
+* **alias** : how we refer to the population / shorthand  
+* **pop**: The population definition i.e. do we keep the positive (+) or negative (-) cells for a marker / pair of markers after gating.  
+* **parent**: The alias of the parent population on which the current population is defined  
+* **dims**: The dimensions / markers used to define this cell population. 
+* **gating_method**: Which gating algorithm to use.   
+* **gating_args**: additional arguments passed to the gating method to tweak various parameters  
+* **collaseDataForGating**: TRUE or FALSE. Together with groupBy will gate multiple samples with a common gate.  
+* **groupBy**: Specify metadata variables for combining samples (e.g. pub_id)  
+* **preprocessing_method**: advanced use for some gating methods  
+* **preprocessing_args**: additional arguments  
+
+## Constructing a Template - III
+We read in the template and visualize it
+```{r read_plot_template,echo=TRUE,message=FALSE,warning=FALSE,results='hide',fig.align="center",fig.width=8,fig.height=5,out.width=600,dpi=200,fig.cap=''}
+gt<-gatingTemplate("data/template/gt_080.csv")
+plot(gt)
+```
+
+## Automated Gating   
+openCyto walks through the template and gates each population in each sample using the names algoirthm.
+```{r gate_subset,echo=TRUE,message=FALSE,warning=FALSE,results='hide',eval=FALSE,fig.cap=''}
+gating(x = gt, y =  auto_gating)
+## Some output..
+plot(auto_gating)
+```
+```{r plot_autogate_tree,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center',out.width=600}
+if(length(getNodes(auto_gating))<1){
+  gating(x = gt, y =  auto_gating)
+  save_gs(auto_gating,path="data//autogating",overwrite = TRUE)
+}
+plot(auto_gating)
+```
+
+## Automated Gating - II  {.smaller}
+Ex. CD4 and CD8 populations  
+```{r compare_to_manual,echo=TRUE,fig.cap='Automated and Manual Gates for CD4/CD8',cache=TRUE,fig.align='center',fig.width=5,fig.height=2.5,out.width=600}
+p1<-plotGate(auto_gating[[1]],c("cd8","cd4"),arrange=FALSE,projections=list("cd4"=c(x="CD8",y="CD4"),"cd8"=c(x="CD8",y="CD4")),main="Automated Gate",path=2)[[1]]
+p2<-plotGate(gating_subset[[1]],c("8+","4+"),arrange=FALSE,main="Manual Gate",path=2)[[1]]
+grid.arrange(arrangeGrob(p1,p2,ncol=2))
+```
+Stats and gates are comparable, could be tweaked if necessary, but importantly it's reproducible. Always generate the same result.
+
+## Extract Stats and Compare {.smaller}
+```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=TRUE,fig.align='center',out.width=800}
+auto_stats<-getPopStats(auto_gating,statistic="count")
+manual_stats<-getPopStats(gating_subset,statistic="count")
+gates_to_remove<-names(which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="+"))>1)))
+gates_to_remove<-c(gates_to_remove,names(which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="-"))>1))))
+for(i in gates_to_remove){
+  try(Rm(i,gating_subset))
+}
+.getCounts<-function(stat="count"){
+  auto_stats<-getPopStats(auto_gating,statistic=stat)
+  manual_stats<-getPopStats(gating_subset,statistic=stat)
+  #combine
+  melted_auto<-melt(auto_stats)
+  melted_manual<-melt(manual_stats)
+  setnames(melted_manual,c("population","file","counts"))
+  setnames(melted_auto,c("population","file","counts"))
+  melted_auto<-subset(melted_auto,!population%in%c("/boundary","/boundary/singlet/viable/nonNeutro","/boundary/singlet/viable/nonNeutro/DebrisGate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+/cd4neg","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-/cd4pos","/boundary/singlet/viable/nonDebris","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-","/boundary/singlet" ))
+  melted_auto$population<-factor(melted_auto$population)
+  melted_manual<-subset(melted_manual,!population%in%c("/S/Lv/L/Not 4+","/S/Lv/L/3+/8+/IFN\\IL2","/S/Lv/L/3+/8+/IFN+IL2-","/S/Lv/L/3+/4+/IFN\\IL2","/S/Lv/L/3+/4+/IFN+IL2-","/S/Lv/L/3+/8+/IFN-IL2+","/S/Lv/L/3+/4+/IFN-IL2+","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-"))
+  melted_manual$population<-factor(melted_manual$population)
+  D<-adist((levels(melted_auto$population)),(levels(melted_manual$population)),ignore.case=TRUE,partial=TRUE)
+  D<-solve_LSAP(D)
+  levels(melted_auto$population)<-levels(melted_manual$population)[D]
+  merged<-rbind(cbind(melted_auto,method="auto"),cbind(melted_manual,method="manual"))
+  merged
+}
+
+merged_counts<-.getCounts(stat="count")
+merged_props<-.getCounts(stat="freq")
+  corr.coef<-cor(dcast(merged_counts,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
+  corr.coef.freq<-cor(dcast(merged_props,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
+
+et<-element_text(size=12)
+et2<-element_text(size=8)
+p1<-ggplot(dcast(merged_counts,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Count")+scale_x_log10("Autogating Population Count")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="none")+scale_color_discrete("Population")+geom_text(aes(x=10,y=100000,label=sprintf("rho=%s",signif(corr.coef[1,2],4))),data=data.frame(corr.coef))
+p2<-ggplot(dcast(merged_props,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Proportion")+scale_x_log10("Autogating Population Proportion")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="left")+scale_color_discrete("Population")+geom_text(aes(x=0.01,y=0.75,label=sprintf("rho=%s",signif(corr.coef.freq[1,2],4))),data=data.frame(corr.coef.freq))
+grid.draw(cbind(ggplotGrob(p1), ggplotGrob(p2), size="last"))
+```
+```{r extract_stats_echo,echo=TRUE,eval=FALSE}
+auto_stats<-getPopStats(auto_gating,statistic="count")
+manual_stats<-getPopStats(gating_subset,statistic="count")
+```
+Differences in Perforin (which is incorrectly gated in the manual analysis), and in TNFa+, which we know is gated slightly differently in the manual gating.
+
+## Online Resources
+
+* OpenCyto website: http://opencyto.org
+    * Documentation
+    * Reproducible examples and data
+* Github repository: http://github.org/RGLab/OpenCyto
+
+## Acknowledgements
+<div class="columns-2">
+*RGLab @ Fred Hutchinson Cancer Research Center*  
+**Raphael Gottardo**  
+Mike Jiang  
+Jacob Frelinger  
+John Ramey*  
+
+
+*Collaborators*  
+**Steve De Rosa** @ HVTN  
+**Adam Asare** @ ITN
+
+*Funding*  
+National Institutes of Health  
+Human Immune Project Consortium
+</div>

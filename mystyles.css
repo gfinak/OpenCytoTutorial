@@ -1,0 +1,70 @@
+emph {
+  color: green;
+}
+
+a {
+  text-decoration: none;
+}
+
+pre {
+  margin-left:50px;
+  font-size: 60%;
+  color: red;
+}
+
+
+
+FILE: custom.css
+body {
+  font-family: sans-serif;
+  background-color: white;
+  font-size: 12px;
+  margin: 20px;
+}
+
+h1 {font-size:1.5em;}
+
+table {
+  border: solid;
+  border-color: black;
+  border-width: 2px;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  text-align: center;
+  padding: 0px;
+}
+
+.t1 .header {
+  color: white;
+  background-color: black;
+  border-bottom: solid;
+  border-color: black;
+  border-width: 2px;
+  font-weight: bold;
+}
+
+.t1 .footer {
+  border-top: solid;
+  border-color: black;
+  border-width: 2px;
+}
+
+.t1 .col_first {
+  border-right: solid;
+  border-color: black;
+  border-width: 2px;
+  text-align: left;
+  font-weight: bold;
+  width: 75px;
+}
+
+.t1 .col {
+  width: 50px;
+}
+
+.t1 .col_last {
+  width: 50px;
+  border-left: solid;
+  border-color: black;
+  border-width: 2px;
+}
