@@ -169,7 +169,8 @@ knitr::kable(head(subset(na.omit(pd)[,c(1:5)],PTID%in%"080-17"),4),row.names = F
 ```
 
 ## Copy and save {.smaller}
-We want to perform automated gating of this data. 
+We want to perform automated gating of this data.  
+
 * We'll delete the existing nodes and re-save the data in a new gating set.
 ```{r copy_and_save,eval=FALSE,message=FALSE,warining=FALSE,results='hide'}
 auto_gating<-clone(gating_subset)
