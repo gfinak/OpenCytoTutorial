@@ -273,7 +273,7 @@ merged_props<-.getCounts(stat="freq")
   corr.coef<-cor(dcast(merged_counts,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
   corr.coef.freq<-cor(dcast(merged_props,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
 
-et<-element_text(size=10)
+et<-element_text(size=12)
 et2<-element_text(size=8)
 p1<-ggplot(dcast(merged_counts,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Count")+scale_x_log10("Autogating Population Count")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="none")+scale_color_discrete("Population")+geom_text(aes(x=10,y=100000,label=sprintf("rho=%s",signif(corr.coef[1,2],4))),data=data.frame(corr.coef))
 p2<-ggplot(dcast(merged_props,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Proportion")+scale_x_log10("Autogating Population Proportion")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="left")+scale_color_discrete("Population")+geom_text(aes(x=0.01,y=0.75,label=sprintf("rho=%s",signif(corr.coef.freq[1,2],4))),data=data.frame(corr.coef.freq))
