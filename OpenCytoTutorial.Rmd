@@ -171,7 +171,7 @@ knitr::kable(head(subset(na.omit(pd)[,c(1:5)],PTID%in%"080-17"),4),row.names = F
 ## Copy and save {.smaller}
 We want to perform automated gating of this data.  
 
-* We'll delete the existing nodes and re-save the data in a new gating set.
+* We'll clone the gating set, delete existing nodes and re-save the data as a new gating set.
 ```{r copy_and_save,eval=FALSE,message=FALSE,warining=FALSE,results='hide'}
 auto_gating<-clone(gating_subset)
 Rm("S",auto_gating)
@@ -188,12 +188,11 @@ if(!file.exists("data/autogating")){
 ```
 
 ## Costructing a Template - I {.smaller}    
-The text-file template looks like the following:
 
 ```{r read_template,echo=FALSE,results='asis',cache=TRUE}
 template<-read.csv("data//template//gt_080.csv",as.is=FALSE,allowEscapes=TRUE,stringsAsFactors=FALSE)
 template$collapseDataForGating[is.na(template$collapseDataForGating)]<-" "
-Kmisc::htmlTable(data.frame(template)[1:10,c(1:5,8,9)])
+Kmisc::htmlTable(data.frame(template)[1:8,c(1:6,8,9)],attr="width=100%")
 ```
 
 ## Costructing a Template - II {.smaller}
@@ -235,7 +234,9 @@ plot(auto_gating)
 ## Automated Gating - II  {.smaller}
 Ex. CD4 and CD8 populations  
 ```{r compare_to_manual,echo=TRUE,fig.cap='Automated and Manual Gates for CD4/CD8',cache=TRUE,fig.align='center',fig.width=5,fig.height=2.5,out.width=600}
-p1<-plotGate(auto_gating[[1]],c("cd8","cd4"),arrange=FALSE,projections=list("cd4"=c(x="CD8",y="CD4"),"cd8"=c(x="CD8",y="CD4")),main="Automated Gate",path=2)[[1]]
+p1<-plotGate(auto_gating[[1]],c("cd8","cd4"),arrange=FALSE,
+             projections=list("cd4"=c(x="CD8",y="CD4"),"cd8"=c(x="CD8",y="CD4")),
+             main="Automated Gate",path=2)[[1]]
 p2<-plotGate(gating_subset[[1]],c("8+","4+"),arrange=FALSE,main="Manual Gate",path=2)[[1]]
 grid.arrange(arrangeGrob(p1,p2,ncol=2))
 ```
@@ -260,6 +261,7 @@ for(i in gates_to_remove){
   setnames(melted_auto,c("population","file","counts"))
   melted_auto<-subset(melted_auto,!population%in%c("/boundary","/boundary/singlet/viable/nonNeutro","/boundary/singlet/viable/nonNeutro/DebrisGate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+/cd4neg","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-/cd4pos","/boundary/singlet/viable/nonDebris","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-","/boundary/singlet" ))
   melted_auto$population<-factor(melted_auto$population)
+  
   melted_manual<-subset(melted_manual,!population%in%c("/S/Lv/L/Not 4+","/S/Lv/L/3+/8+/IFN\\IL2","/S/Lv/L/3+/8+/IFN+IL2-","/S/Lv/L/3+/4+/IFN\\IL2","/S/Lv/L/3+/4+/IFN+IL2-","/S/Lv/L/3+/8+/IFN-IL2+","/S/Lv/L/3+/4+/IFN-IL2+","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-"))
   melted_manual$population<-factor(melted_manual$population)
   D<-adist((levels(melted_auto$population)),(levels(melted_manual$population)),ignore.case=TRUE,partial=TRUE)
@@ -276,15 +278,47 @@ merged_props<-.getCounts(stat="freq")
 
 et<-element_text(size=12)
 et2<-element_text(size=8)
-p1<-ggplot(dcast(merged_counts,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Count")+scale_x_log10("Autogating Population Count")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="none")+scale_color_discrete("Population")+geom_text(aes(x=10,y=100000,label=sprintf("rho=%s",signif(corr.coef[1,2],4))),data=data.frame(corr.coef))
-p2<-ggplot(dcast(merged_props,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Proportion")+scale_x_log10("Autogating Population Proportion")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="left")+scale_color_discrete("Population")+geom_text(aes(x=0.01,y=0.75,label=sprintf("rho=%s",signif(corr.coef.freq[1,2],4))),data=data.frame(corr.coef.freq))
+p1<-ggplot(dcast(merged_counts,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Count")+scale_x_log10("Autogating Population Count")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="none")+scale_color_discrete("Population")+geom_text(aes(x=10,y=100000,label=sprintf("rho=%s",signif(corr.coef[1,2],4))),data=data.frame(corr.coef))+ggtitle("Counts")
+p2<-ggplot(dcast(merged_props,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Proportion")+scale_x_log10("Autogating Population Proportion")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="left")+scale_color_discrete("Population")+geom_text(aes(x=0.01,y=0.75,label=sprintf("rho=%s",signif(corr.coef.freq[1,2],4))),data=data.frame(corr.coef.freq))+ggtitle("Proportions")
 grid.draw(cbind(ggplotGrob(p1), ggplotGrob(p2), size="last"))
 ```
 ```{r extract_stats_echo,echo=TRUE,eval=FALSE}
+#Extract stats
 auto_stats<-getPopStats(auto_gating,statistic="count")
 manual_stats<-getPopStats(gating_subset,statistic="count")
 ```
-Differences in Perforin (which is incorrectly gated in the manual analysis), and in TNFa+, which we know is gated slightly differently in the manual gating.
+
+* Note Perforin is incorrectly gated in the manual analysis.
+* Minor differences, but <emph>reproducible and objective</emph>.
+
+## Perforin
+
+```{r example_Perforin,echo=FALSE,eval=TRUE,fig.cap='Automated and Manual Gating of Perforin/CD8',cache=TRUE,fig.align='center',fig.width=7.5,fig.height=3.5}
+p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],"cd8/Prf",default.y="<Alexa 680-A>",xbin=256,margin=FALSE,path=2,arrange=FALSE,main="Automated",xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5))[[1]]
+p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],"8+/Perforin+",default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5),arrange=FALSE,main="Manual")[[1]]
+grid.arrange(p1,p2,ncol=2)
+```
+
+## TNFa
+
+```{r example_TNFa,echo=FALSE,eval=TRUE,cache=TRUE,fig.cap="Automated and manual gating of TFNa",fig.align='center'}
+p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],c("cd8/TNFa","cd4/TNFa"),default.y="<PE Cy7-A>",xbin=256,margin=FALSE,path=2,arrange=FALSE,main="Automated",xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1))
+p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],c("8+/TNFa+","4+/TNFa+"),default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1),arrange=FALSE,main="Manual")
+do.call(grid.arrange,c(p1,p2,ncol=2))
+```
+
+## Summary
+
+* OpenCyto is a <emph>framework</emph> for constructing standardized analysis pipelines for standardized assays.
+* Plugins allow any gating algorithm to be used for gating any cell pouplation (even high-dimensional gating, i.e. not just 1-D or 2-D)
+* If the data coming off of an instrument are consistent, then an OpenCyto gating template can be reused for any data set using the same panel.
+     * Work is done up front to set up the template.
+     * Fully reproducible and <emph>*objective, data-driven*</emph> gating.
+* With adequate SOP's in place, the analysis code can also be re-used.
+    * Code reads data, performs preprocessing, compensation, transformation, and gating using a template.
+    * Generates plots, writes out statistics, can perform analysis and QC.
+    * All this can be standardized with adequate SOPs (standard naming conventions, good use of Keywords, and so forth.)
+
 
 ## Online Resources
 
@@ -292,6 +326,8 @@ Differences in Perforin (which is incorrectly gated in the manual analysis), and
     * Documentation
     * Reproducible examples and data
 * Github repository: http://github.org/RGLab/OpenCyto
+* These slides: http://gfinak.github.io/OpenCytoTutorial
+    * Code: http://www.github.com/gfinak/OpenCytoTutorial
 
 ## Acknowledgements
 <div class="columns-2">
