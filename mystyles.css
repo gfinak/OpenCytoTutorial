@@ -75,9 +75,10 @@ table {
 
 footer {
     bottom: 2px;
-    left: 10px;
+    left: 2px;
     color: black;
     position: fixed;
     right: 0;
+    font-size: 12px;
     text-align: left;
 }

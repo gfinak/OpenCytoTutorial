@@ -6,8 +6,6 @@ author: "Greg Finak, PhD<br>Staff Scientist<br>Vaccine and Infectious Disease Di
 date: "May 17, 2014"
 output:
   ioslides_presentation:
-    includes:
-      after_body: doc_footer.html
     fig_caption: yes
     widescreen: yes
     pandoc_args: [
@@ -38,6 +36,8 @@ output:
 * <emph>Scale to *large* data sets </emph>
     * NetCDF support - data sets limited by disk space not RAM.
 
+<footer>www.isac-net.org</footer>
+
 ## Overview {.smaller}
 ```{r framework_figure, echo=FALSE,fig.cap='The OpenCyto Gating Framework is a collection of R/BioConductor packages for easily building reproducible flow data analysis pipelines.',message=FALSE,fig.align='center',fig.width=8,cache=TRUE}
 require(png)
@@ -47,6 +47,8 @@ grid.raster(img)
 ```
 
 <p align="center">Raw data --> Preprocessing --> Annotation --> Gating --> Statistical analysis --> Output</p>
+
+<footer>www.isac-net.org</footer>
 
 ## Getting Started | Installation
 
@@ -70,7 +72,7 @@ Email: [Mike Jiang](wjiang2@fhcrc.org) or [Greg Finak](gfinak@fhcrc.org)
 Twitter: [\@OpenCyto](http://www.twitter.com/OpenCyto)
 </p>
 
-
+<footer>www.isac-net.org</footer>
 
 ## A Worked Example | Intracellular Cytokine Staining of Antigen-stimulated T-cells 
 
@@ -103,6 +105,8 @@ Groups in Workspace
 4 0882 Samples          76
 </pre>
 
+<footer>www.isac-net.org</footer>
+
 ## Import Manual Gating (parseWorkspace) {.smaller}
 Create a gating set of manual gates.
 ```{r parseWorkspace_echo,echo=TRUE,eval=FALSE}
@@ -133,18 +137,24 @@ To reload it, use 'load_gs' function
 </pre>  
 The archived gating set contains all the information on <emph>transformation, compensation, single-cell events, and gates</emph> and can be *shared with collaborators*.
 
+<footer>www.isac-net.org</footer>
+
 ## Visualizing the Gating Layout  (plotGate)   
 ```{r vis_manual_gates,echo=TRUE,eval=TRUE,results='hide',cache=TRUE,message=FALSE,warning=FALSE,fig.align='center',fig.cap='Layout of manual gates'}
 plotGate(gating_set[[1]],xbin=16) # Binning for faster plotting
 ```
 
+<footer>www.isac-net.org</footer>
+
+
 ## Visualizing the Gating Tree  (plot)
+
 Calling `plot` on the gating set gives us a view of the gating tree.
-```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap='Gating Tree for the ICS data'}
+```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap=''}
 Rm("Not 4+/IFNg+",gating_set)
 plot(gating_set)
 ```
-
+<footer>www.isac-net.org</footer>
 
 ## Annotation {.smaller}
 We <emph>annotate</emph> our gating set from the <emph>keywords</emph> and <emph>flowrepository</emph>. We'll keep only the <emph>GAG</emph> and <emph>negative control</emph> stimulations
@@ -170,6 +180,8 @@ gating_subset<-gating_set[subset(pd,!is.na(Condition))$name] #subset only the GA
 ```{r keywords_tbl,eval=TRUE,echo=FALSE,results='asis',cache=TRUE}
 knitr::kable(head(subset(na.omit(pd)[,c(1:5)],PTID%in%"080-17"),4),row.names = FALSE)
 ```
+
+<footer>www.isac-net.org</footer>
 
 ## Clone and save for automated gating {.smaller}
 We want to perform automated gating of this data.  
@@ -198,6 +210,8 @@ list.files("data/autogating")
 
 Send it to a friend, `load_gs()` will read it all in and the data will be available.
 
+<footer>www.isac-net.org</footer>
+
 ## Costructing a Template - I {.smaller}    
 
 ```{r read_template,echo=FALSE,results='asis',cache=TRUE}
@@ -205,6 +219,8 @@ template<-read.csv("data//template//gt_080.csv",as.is=FALSE,allowEscapes=TRUE,st
 template$collapseDataForGating[is.na(template$collapseDataForGating)]<-" "
 Kmisc::htmlTable(data.frame(template)[1:8,c(1:6,8,9)],attr="width=100%")
 ```
+
+<footer>www.isac-net.org</footer>
 
 ## Costructing a Template - II {.smaller}
 Each row defines a cell population  
@@ -220,12 +236,17 @@ Each row defines a cell population
 * `preprocessing_method`: advanced use for some gating methods  
 * `preprocessing_args`: additional arguments  
 
+<footer>www.isac-net.org</footer>
+
+
 ## Constructing a Template - III
 We read in the template and visualize it
 ```{r read_plot_template,echo=TRUE,message=FALSE,warning=FALSE,results='hide',fig.align="center",fig.width=8,fig.height=5,out.width=600,dpi=200,fig.cap=''}
 gt<-gatingTemplate("data/template/gt_080.csv")
 plot(gt)
 ```
+
+<footer>www.isac-net.org</footer>
 
 ## Automated Gating   
 openCyto walks through the template and gates each population in each sample using the names algoirthm.
@@ -242,6 +263,8 @@ if(length(getNodes(auto_gating))<1){
 plot(auto_gating)
 ```
 
+<footer>www.isac-net.org</footer>
+
 ## Automated Gating - II  {.smaller}
 Ex. CD4 and CD8 populations  
 ```{r compare_to_manual,echo=TRUE,fig.cap='Automated and Manual Gates for CD4/CD8',cache=TRUE,fig.align='center',fig.width=5,fig.height=2.5,out.width=600}
@@ -252,6 +275,8 @@ p2<-plotGate(gating_subset[[1]],c("8+","4+"),arrange=FALSE,main="Manual Gate",pa
 grid.arrange(arrangeGrob(p1,p2,ncol=2))
 ```
 Stats and gates are comparable, could be tweaked if necessary, but importantly it's reproducible. Always generate the same result.
+
+<footer>www.isac-net.org</footer>
 
 ## Extract Stats and Compare Manual to Automated{.smaller}
 ```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=TRUE,fig.align='center',out.width=800}
@@ -301,6 +326,8 @@ manual_stats<-getPopStats(gating_subset,statistic="count")
 
 Note Perforin is incorrectly gated in the manual analysis. Minor differences at low end, but <emph>reproducible and objective</emph>.
 
+<footer>www.isac-net.org</footer>
+
 ## Perforin - Cytokine gate and reference gate{.smaller}
 
 ```{r example_Perforin,echo=FALSE,eval=TRUE,fig.cap='Automated and Manual Gating of Perforin/CD8',cache=TRUE,fig.align='center',fig.width=7.5,fig.height=3.5,out.width=500}
@@ -328,6 +355,8 @@ abline(v=peaks)
 ```
 Automated gate set on CD57- (reference). Perforin-negative cells included in the manual gate. 
 
+<footer>www.isac-net.org</footer>
+
 ## TNFa
 
 ```{r example_TNFa,echo=FALSE,eval=TRUE,cache=TRUE,fig.cap="Automated and manual gating of TFNa",fig.align='center'}
@@ -335,6 +364,8 @@ p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],c("cd8/TNFa","cd4/TNFa
 p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],c("8+/TNFa+","4+/TNFa+"),default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1),arrange=FALSE,main="Manual")
 do.call(grid.arrange,c(p1,p2,ncol=2))
 ```
+
+<footer>www.isac-net.org</footer>
 
 ## Some Useful Functions {.smaller}  
 Return a `flowSet` containing <emph>event-level data for the named cell population</emph>.
@@ -358,6 +389,8 @@ Register a <emph>new gating or preprocessing plugin</emph>.
 registerPlugins(myfunction,methodName,dependencies, "preprocessing"|"gating")
 ```
 
+<footer>www.isac-net.org</footer>
+
 ## Some More Useful Functions  {.smaller}
 <emph>Generate a Basic GatingTemplate from a Manual Gating Hierarchy</emph>.
 ```{r gen_template,echo=TRUE,eval=FALSE,results='asis'}
@@ -370,6 +403,8 @@ Kmisc::htmlTable(hd)
 ```
 * Just fill in the `gating_method` and `dims` to get started.
 
+<footer>www.isac-net.org</footer>
+
 ## Some Typical Gating Methods Use Cases
 
 * `mindensity`: Finds the minimum density cut point between two primary populations. Can be restricted to a range of the data. 
@@ -380,6 +415,8 @@ Kmisc::htmlTable(hd)
 * `refGate`: A *reference* gate. Used to refer to a gate defined elsewhere in the hierarchy, the data-driven threshold can be reused. Similar to *"back-gating"*.
 * `flowDensity`: Supported via plugin, density-based gating from our good friends at the BC Cancer Agency.
 * Other methods:  `rangeGate`, `quadrantGate`, `quantileGate` 
+
+<footer>www.isac-net.org</footer>
 
 ## Summary {.smaller}
 
@@ -395,6 +432,7 @@ Kmisc::htmlTable(hd)
     * Generates plots, writes out statistics, can perform analysis and QC.
     * All this can be standardized with adequate SOPs (standard naming conventions, good use of Keywords, and so forth.)
 
+<footer>www.isac-net.org</footer>
 
 ## Online Resources
 
@@ -405,6 +443,8 @@ Kmisc::htmlTable(hd)
 * These slides: http://gfinak.github.io/OpenCytoTutorial
     * Code: http://www.github.com/gfinak/OpenCytoTutorial
 * The BioConductor website: http://www.bioconductor.org
+
+<footer>www.isac-net.org</footer>
 
 ## Acknowledgements
 <div class="columns-2">
@@ -423,3 +463,4 @@ Jacob Frelinger
 National Institutes of Health  
 Human Immune Project Consortium
 </div>
+<footer>www.isac-net.org</footer>
