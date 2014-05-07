@@ -72,3 +72,12 @@ table {
   border-color: black;
   border-width: 2px;
 }
+
+footer {
+    bottom: 2px;
+    left: 10px;
+    color: black;
+    position: fixed;
+    right: 0;
+    text-align: left;
+}

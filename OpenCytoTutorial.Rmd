@@ -1,13 +1,14 @@
 ---
-title: "&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspOpenCyto Tutorial<br><font size=6>Robust and Reproducible Automated Gating
+title: "OpenCyto Tutorial<img src='resources/Cyto_logo_title.png', width='250px'><br><font size=6>Robust and Reproducible Automated Gating
   of Cytometry Data<br>Cyto 2014</font>"
 author: "Greg Finak, PhD<br>Staff Scientist<br>Vaccine and Infectious Disease Division,
   Fred Hutchinson Cancer Research Center"
 date: "May 17, 2014"
 output:
   ioslides_presentation:
+    includes:
+      after_body: doc_footer.html
     fig_caption: yes
-    logo: resources/H.jpeg
     widescreen: yes
     pandoc_args: [
       "-c", "mystyles.css",
@@ -19,7 +20,7 @@ output:
     highlight: tango
 ---
 
-## What is OpenCyto?
+## What is OpenCyto? {.smaller}
 **Not an algorithm, but a <emph>*framework*</emph> for automated gating.**  
 
 **Goals**  
@@ -27,6 +28,8 @@ output:
 * Easily build <emph>*reproducible gating pipelines*</emph>.   
 * <emph>*Use any gating algorithm*</emph> 
     * interchange any algorithm at any step (support gating plugins)
+* Simplify <emph>data handling and data management</emph>. 
+    * Easily pass subsets of the data (cell subsets) to different gating algorithms.
 * <emph>Simple(r) pipeline template definitions</emph>
     * Pipeline defined via text file (csv)
     * Templates and code are <emph>*re-usable*</emph> for standardized assays and data.
@@ -36,7 +39,7 @@ output:
     * NetCDF support - data sets limited by disk space not RAM.
 
 ## Overview {.smaller}
-```{r framework_figure, echo=FALSE,fig.cap='The OpenCyto Gating Framework is a collection of R/BioConductor packages for easily building reproducible flow data analysis pipelines.',message=FALSE,fig.align='center',cache=TRUE}
+```{r framework_figure, echo=FALSE,fig.cap='The OpenCyto Gating Framework is a collection of R/BioConductor packages for easily building reproducible flow data analysis pipelines.',message=FALSE,fig.align='center',fig.width=8,cache=TRUE}
 require(png)
 require(grid)
 img<-readPNG("resources/Framework.png")
@@ -136,8 +139,8 @@ plotGate(gating_set[[1]],xbin=16) # Binning for faster plotting
 ```
 
 ## Visualizing the Gating Tree  (plot)
-Calling `plot` on the gating set gives us a view of the tree.
-```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap=''}
+Calling `plot` on the gating set gives us a view of the gating tree.
+```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap='Gating Tree for the ICS data'}
 Rm("Not 4+/IFNg+",gating_set)
 plot(gating_set)
 ```
@@ -168,7 +171,7 @@ gating_subset<-gating_set[subset(pd,!is.na(Condition))$name] #subset only the GA
 knitr::kable(head(subset(na.omit(pd)[,c(1:5)],PTID%in%"080-17"),4),row.names = FALSE)
 ```
 
-## Copy and save {.smaller}
+## Clone and save for automated gating {.smaller}
 We want to perform automated gating of this data.  
 
 * We'll clone the gating set, delete existing nodes and re-save the data as a new gating set.
@@ -186,6 +189,14 @@ if(!file.exists("data/autogating")){
   auto_gating<-load_gs("data/autogating/")
 }
 ```
+```{r echo=TRUE,eval=TRUE}
+list.files("data/autogating")
+```
+* `.nc` file is the HDF5 file of event-level data..
+* `.dat` file contains the gating set representation from the `C` data structure.
+* `.rds` file is an `R` data file that contains the R-object information.
+
+Send it to a friend, `load_gs()` will read it all in and the data will be available.
 
 ## Costructing a Template - I {.smaller}    
 
@@ -198,16 +209,16 @@ Kmisc::htmlTable(data.frame(template)[1:8,c(1:6,8,9)],attr="width=100%")
 ## Costructing a Template - II {.smaller}
 Each row defines a cell population  
 
-* **alias** : how we refer to the population / shorthand  
-* **pop**: The population definition i.e. do we keep the positive (+) or negative (-) cells for a marker / pair of markers after gating.  
-* **parent**: The alias of the parent population on which the current population is defined  
-* **dims**: The dimensions / markers used to define this cell population. 
-* **gating_method**: Which gating algorithm to use.   
-* **gating_args**: additional arguments passed to the gating method to tweak various parameters  
-* **collaseDataForGating**: TRUE or FALSE. Together with groupBy will gate multiple samples with a common gate.  
-* **groupBy**: Specify metadata variables for combining samples (e.g. pub_id)  
-* **preprocessing_method**: advanced use for some gating methods  
-* **preprocessing_args**: additional arguments  
+* `alias`: how we refer to the population / shorthand  
+* `pop`: The population definition i.e. do we keep the positive (+) or negative (-) cells for a marker / pair of markers after gating.  
+* `parent`: The alias of the parent population on which the current population is defined  
+* `dims`: The dimensions / markers used to define this cell population. 
+* `gating_method`: Which gating algorithm to use.   
+* `gating_args`: additional arguments passed to the gating method to tweak various parameters  
+* `collaseDataForGating`: TRUE or FALSE. Together with groupBy will gate multiple samples with a common gate.  
+* `groupBy`: Specify metadata variables for combining samples (e.g. PTID)  
+* `preprocessing_method`: advanced use for some gating methods  
+* `preprocessing_args`: additional arguments  
 
 ## Constructing a Template - III
 We read in the template and visualize it
@@ -242,7 +253,7 @@ grid.arrange(arrangeGrob(p1,p2,ncol=2))
 ```
 Stats and gates are comparable, could be tweaked if necessary, but importantly it's reproducible. Always generate the same result.
 
-## Extract Stats and Compare {.smaller}
+## Extract Stats and Compare Manual to Automated{.smaller}
 ```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=TRUE,fig.align='center',out.width=800}
 auto_stats<-getPopStats(auto_gating,statistic="count")
 manual_stats<-getPopStats(gating_subset,statistic="count")
@@ -276,10 +287,10 @@ merged_props<-.getCounts(stat="freq")
   corr.coef<-cor(dcast(merged_counts,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
   corr.coef.freq<-cor(dcast(merged_props,file+population~method,value.var = "counts")[,c("auto","manual")],use="complete")
 
-et<-element_text(size=12)
-et2<-element_text(size=8)
-p1<-ggplot(dcast(merged_counts,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Count")+scale_x_log10("Autogating Population Count")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="none")+scale_color_discrete("Population")+geom_text(aes(x=10,y=100000,label=sprintf("rho=%s",signif(corr.coef[1,2],4))),data=data.frame(corr.coef))+ggtitle("Counts")
-p2<-ggplot(dcast(merged_props,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10("Manual Gating Population Proportion")+scale_x_log10("Autogating Population Proportion")+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="left")+scale_color_discrete("Population")+geom_text(aes(x=0.01,y=0.75,label=sprintf("rho=%s",signif(corr.coef.freq[1,2],4))),data=data.frame(corr.coef.freq))+ggtitle("Proportions")
+et<-element_text(size=20)
+et2<-element_text(size=12)
+p1<-ggplot(dcast(merged_counts,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10(Kmisc::wrap("Manual Gating Population Count",30))+scale_x_log10(Kmisc::wrap("Autogating Population Count",30))+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="none",plot.title=et)+scale_color_discrete("Population")+geom_text(aes(x=10,y=100000,label=sprintf("rho=%s",signif(corr.coef[1,2],4))),data=data.frame(corr.coef))+ggtitle("Counts")
+p2<-ggplot(dcast(merged_props,file+population~method,value.var = "counts"))+geom_point(aes(x=auto,y=manual,color=basename(as.character(population))))+scale_y_log10(Kmisc::wrap("Manual Gating Population Proportion",30))+scale_x_log10(Kmisc::wrap("Autogating Population Proportion",30))+theme_bw()+geom_abline(lty=3)+theme(axis.text.x=et,axis.text.y=et,axis.title.x=et,axis.title.y=et,legend.text=et2,legend.position="left",plot.title=et)+scale_color_discrete("Population")+geom_text(aes(x=0.01,y=0.75,label=sprintf("rho=%s",signif(corr.coef.freq[1,2],4))),data=data.frame(corr.coef.freq))+ggtitle("Proportions")
 grid.draw(cbind(ggplotGrob(p1), ggplotGrob(p2), size="last"))
 ```
 ```{r extract_stats_echo,echo=TRUE,eval=FALSE}
@@ -288,16 +299,34 @@ auto_stats<-getPopStats(auto_gating,statistic="count")
 manual_stats<-getPopStats(gating_subset,statistic="count")
 ```
 
-* Note Perforin is incorrectly gated in the manual analysis.
-* Minor differences, but <emph>reproducible and objective</emph>.
+Note Perforin is incorrectly gated in the manual analysis. Minor differences at low end, but <emph>reproducible and objective</emph>.
 
-## Perforin
+## Perforin - Cytokine gate and reference gate{.smaller}
 
-```{r example_Perforin,echo=FALSE,eval=TRUE,fig.cap='Automated and Manual Gating of Perforin/CD8',cache=TRUE,fig.align='center',fig.width=7.5,fig.height=3.5}
+```{r example_Perforin,echo=FALSE,eval=TRUE,fig.cap='Automated and Manual Gating of Perforin/CD8',cache=TRUE,fig.align='center',fig.width=7.5,fig.height=3.5,out.width=500}
 p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],"cd8/Prf",default.y="<Alexa 680-A>",xbin=256,margin=FALSE,path=2,arrange=FALSE,main="Automated",xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5))[[1]]
 p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],"8+/Perforin+",default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5),arrange=FALSE,main="Manual")[[1]]
 grid.arrange(p1,p2,ncol=2)
 ```
+```{r example_derivative_gate,echo=FALSE,eval=TRUE,fig.align='center',out.width=500,fig.width=7.5,fig.height=3.5}
+fr<-getData(auto_gating[[7]],"cd8/cd57-")
+cut<-tailgate(fr,channel="<APC-A>",filter_id="perforin_gate")
+dens<-density(exprs(fr[,"<APC-A>"]),adjust=2)
+second_deriv <- diff(sign(diff(dens$y)))
+which_maxima <- which(second_deriv == -2) + 1
+which_maxima <- which_maxima[findInterval(dens$x[which_maxima], range(exprs(fr[,"<APC-A>"]))) == 1]
+which_maxima <- which_maxima[order(dens$y[which_maxima], decreasing = TRUE)]
+peaks <- dens$x[which_maxima]
+deriv_out <- openCyto:::.deriv_density(x = exprs(fr[,"<APC-A>"]), adjust = 2, deriv = 1)
+par(mfrow=c(1,2))
+plot(dens,main="Density")
+abline(v=peaks)
+abline(v=cut@min,col="red")
+plot(deriv_out,type="l",main="First Derivative",xlab="X",ylab="Density")
+abline(v=cut@min,col="red")
+abline(v=peaks)
+```
+Automated gate set on CD57- (reference). Perforin-negative cells included in the manual gate. 
 
 ## TNFa
 
@@ -307,13 +336,60 @@ p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],c("8+/TNFa+","4+/TNF
 do.call(grid.arrange,c(p1,p2,ncol=2))
 ```
 
-## Summary
+## Some Useful Functions {.smaller}  
+Return a `flowSet` containing <emph>event-level data for the named cell population</emph>.
+```{r getData,echo=TRUE,eval=FALSE}
+cd3_population<-getData(auto_gating,"cd3")
+```
+<emph>Plot a named cell population</emph>.
+```{r plotGate,echo=TRUE,eval=FALSE}
+plotGate(auto_gating,"cd3")
+```
+<emph>Subset by FCS file(s)</emph>.
+```{r subset,echo=TRUE,eval=FALSE}
+first_ten_fcs_files<-auto_gating[1:10]
+```
+List <emph>supported gating methods</emph> (that can be used in a template).
+```{r listgtMethods,echo=TRUE,eval=FALSE}
+listgtMethods()
+```
+Register a <emph>new gating or preprocessing plugin</emph>.
+```{r register_plugin,echo=TRUE,eval=FALSE}
+registerPlugins(myfunction,methodName,dependencies, "preprocessing"|"gating")
+```
+
+## Some More Useful Functions  {.smaller}
+<emph>Generate a Basic GatingTemplate from a Manual Gating Hierarchy</emph>.
+```{r gen_template,echo=TRUE,eval=FALSE,results='asis'}
+templateGen(gating_subset[[1]])
+```
+```{r gen_template_noecho,echo=FALSE,eval=TRUE,results='asis'}
+hd<-head(data.frame(templateGen(gating_subset[[1]])),7)
+hd[is.na(hd)]<-""
+Kmisc::htmlTable(hd)
+```
+* Just fill in the `gating_method` and `dims` to get started.
+
+## Some Typical Gating Methods Use Cases
+
+* `mindensity`: Finds the minimum density cut point between two primary populations. Can be restricted to a range of the data. 
+* `cytokine / tailgate`: Identifies rare populations that are in the tails of a large primary population. Estimates 2st derivative of the denstiy. Smoothing and tolerance can be adjusted.
+* `flowClust`: 1D, 2D, or n-Dimensional clustering. Generally useful for lymphocytes. Can infer a data-driven empirical-Bayes prior across samples. 
+* `singletGate`: Fits a model that approximates a typical singlet gate on scatter area vs height or width.
+* `boundary`: Filters out boundary events. 
+* `refGate`: A *reference* gate. Used to refer to a gate defined elsewhere in the hierarchy, the data-driven threshold can be reused. Similar to *"back-gating"*.
+* `flowDensity`: Supported via plugin, density-based gating from our good friends at the BC Cancer Agency.
+* Other methods:  `rangeGate`, `quadrantGate`, `quantileGate` 
+
+## Summary {.smaller}
 
 * OpenCyto is a <emph>framework</emph> for constructing standardized analysis pipelines for standardized assays.
-* Plugins allow any gating algorithm to be used for gating any cell pouplation (even high-dimensional gating, i.e. not just 1-D or 2-D)
-* If the data coming off of an instrument are consistent, then an OpenCyto gating template can be reused for any data set using the same panel.
+* Plugins allow any gating algorithm to be used for gating any cell pouplation (even high-dimensional gating, i.e. not just 1-D or 2-D) 
+    * e.g  <emph>flowDensity</emph> is supported.
+* If the data coming off of an instrument are consistent, then an <emph>OpenCyto gating template can be reused</emph> for any data set using the same panel.
      * Work is done up front to set up the template.
-     * Fully reproducible and <emph>*objective, data-driven*</emph> gating.
+     * Fully reproducible and <emph>*objective, data-driven gating*</emph>.
+* Framework handles <emph>data manipulation</emph>.
 * With adequate SOP's in place, the analysis code can also be re-used.
     * Code reads data, performs preprocessing, compensation, transformation, and gating using a template.
     * Generates plots, writes out statistics, can perform analysis and QC.
@@ -325,9 +401,10 @@ do.call(grid.arrange,c(p1,p2,ncol=2))
 * OpenCyto website: http://opencyto.org
     * Documentation
     * Reproducible examples and data
-* Github repository: http://github.org/RGLab/OpenCyto
+* Our Github repository: http://github.org/RGLab/OpenCyto
 * These slides: http://gfinak.github.io/OpenCytoTutorial
     * Code: http://www.github.com/gfinak/OpenCytoTutorial
+* The BioConductor website: http://www.bioconductor.org
 
 ## Acknowledgements
 <div class="columns-2">
@@ -335,7 +412,7 @@ do.call(grid.arrange,c(p1,p2,ncol=2))
 **Raphael Gottardo**  
 Mike Jiang  
 Jacob Frelinger  
-John Ramey*  
+*John Ramey*
 
 
 *Collaborators*  
