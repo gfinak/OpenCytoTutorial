@@ -418,6 +418,22 @@ Kmisc::htmlTable(hd)
 
 <footer>www.isac-net.org</footer>
 
+## Where we've used OpenCyto
+
+* Gating of Lyoplate standardized staining panels (FlowCAP III)
+* Gating of HIV vaccine clinical trial ICS data at the HVTN
+    * Re-analysis of RV144, HVTN080, HVTN078,...
+* Gating of ICS data from tuberculosis vs. healthy subjects.
+* Gating of CyTOF data
+    * Exhaustive gating of polyfunctional T-cell subsets.
+
+<emph>Studies wtih 100s of GB of data.</emp>   
+<emph>None take more than a couple of hours to run.</emph>
+
+* Event-level data and cell population memberships can easily be shared with collaborators   
+* Easily pushed into downstream statstical analysis methods like MIMOSA (PMC3862207) or COMPASS (http://rglab.github.org/COMPASS/)   
+<emph>We're usually pretty friendly and can help you get started</emph>
+
 ## Summary {.smaller}
 
 * OpenCyto is a <emph>framework</emph> for constructing standardized analysis pipelines for standardized assays.
