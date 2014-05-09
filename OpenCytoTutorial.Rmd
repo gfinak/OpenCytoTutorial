@@ -34,19 +34,20 @@ output:
 * <emph>Facilitate comparative analysis</emph>
     * Import manually gated data from FlowJo workspaces
 * <emph>Scale to *large* data sets </emph>
-    * NetCDF support - data sets limited by disk space not RAM.
+    * HDF5 support - data sets limited by disk space not RAM.
 
 <footer>www.isac-net.org</footer>
 
 ## Overview {.smaller}
+
+<p align="center">Raw data &#10137; Preprocessing &#10137; Annotation &#10137; Gating &#10137; Statistical analysis &#10137; Output</p>
+
 ```{r framework_figure, echo=FALSE,fig.cap='The OpenCyto Gating Framework is a collection of R/BioConductor packages for easily building reproducible flow data analysis pipelines.',message=FALSE,fig.align='center',fig.width=8,cache=TRUE}
 require(png)
 require(grid)
 img<-readPNG("resources/Framework.png")
 grid.raster(img)
 ```
-
-<p align="center">Raw data --> Preprocessing --> Annotation --> Gating --> Statistical analysis --> Output</p>
 
 <footer>www.isac-net.org</footer>
 
@@ -125,7 +126,7 @@ Parsing 76 samples
 calling c++ parser...
 ...
 </pre>
-We now have gated, compensated and transformed data in a <emph>*NetCDF*</emph> file represented in a <emph>*GatingSet*</emph> object.  We can save it for later use.   
+We now have gated, compensated and transformed data in an <emph>*HDF5*</emph> file represented in a <emph>*GatingSet*</emph> object.  We can save it for later use.   
 ```{r eval=FALSE,echo=TRUE,results='hide'}
 save_gs(gating_set,path="data/manual_gating")
 ```
@@ -140,8 +141,11 @@ The archived gating set contains all the information on <emph>transformation, co
 <footer>www.isac-net.org</footer>
 
 ## Visualizing the Gating Layout  (plotGate)   
+```{r clean_manual,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+Rm("Not 4+",gating_set)
+```
 ```{r vis_manual_gates,echo=TRUE,eval=TRUE,results='hide',cache=TRUE,message=FALSE,warning=FALSE,fig.align='center',fig.cap='Layout of manual gates'}
-plotGate(gating_set[[1]],xbin=16) # Binning for faster plotting
+plotGate(gating_set[[1]],xbin=16,gpar=list(ncol=5)) # Binning for faster plotting
 ```
 
 <footer>www.isac-net.org</footer>
@@ -151,7 +155,6 @@ plotGate(gating_set[[1]],xbin=16) # Binning for faster plotting
 
 Calling `plot` on the gating set gives us a view of the gating tree.
 ```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap=''}
-Rm("Not 4+/IFNg+",gating_set)
 plot(gating_set)
 ```
 <footer>www.isac-net.org</footer>
@@ -249,17 +252,28 @@ plot(gt)
 <footer>www.isac-net.org</footer>
 
 ## Automated Gating   
-openCyto walks through the template and gates each population in each sample using the names algoirthm.
+openCyto walks through the template and gates each population in each sample using the algoirthm named in the template.
 ```{r gate_subset,echo=TRUE,message=FALSE,warning=FALSE,results='hide',eval=FALSE,fig.cap=''}
 gating(x = gt, y =  auto_gating)
 ## Some output..
 plot(auto_gating)
 ```
-```{r plot_autogate_tree,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center',out.width=600}
+```{r plot_autogate_tree,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center',out.width=600,results='hide'}
 if(length(getNodes(auto_gating))<1){
   gating(x = gt, y =  auto_gating)
   save_gs(auto_gating,path="data//autogating",overwrite = TRUE)
 }
+setNode(auto_gating,"nonNeutro",FALSE)
+setNode(auto_gating,"DebrisGate",FALSE)
+setNode(auto_gating,"cd4/cd57-/gzb_gate",FALSE)
+setNode(auto_gating,"cd4/cd57-/prf_gate",FALSE)
+setNode(auto_gating,"cd8/cd57-/gzb_gate",FALSE)
+setNode(auto_gating,"cd8/cd57-/prf_gate",FALSE)
+setNode(auto_gating,"cd4neg",FALSE)
+setNode(auto_gating,"cd4pos",FALSE)
+setNode(auto_gating,"cd8+",FALSE)
+setNode(auto_gating,"cd8-",FALSE)
+
 plot(auto_gating)
 ```
 
@@ -420,37 +434,42 @@ Kmisc::htmlTable(hd)
 
 ## Where we've used OpenCyto
 
-* Gating of Lyoplate standardized staining panels (FlowCAP III)
-* Gating of HIV vaccine clinical trial ICS data at the HVTN
-    * Re-analysis of RV144, HVTN080, HVTN078,...
-* Gating of ICS data from tuberculosis vs. healthy subjects.
-* Gating of CyTOF data
-    * Exhaustive gating of polyfunctional T-cell subsets.
-
 <emph>Studies wtih 100s of GB of data.</emp>   
 <emph>None take more than a couple of hours to run.</emph>
 
-* Event-level data and cell population memberships can easily be shared with collaborators   
-* Easily pushed into downstream statstical analysis methods like MIMOSA (PMC3862207) or COMPASS (http://rglab.github.org/COMPASS/)   
+* Gating of Lyoplate standardized staining panels (FlowCAP III)
+* Many large clinical trial ICS data sets at the HVTN
+* ICS data - MTB infected vs. healthy subjects.
+* CyTOF combinatorial cytokine data
+    * Exhaustive gating of polyfunctional T-cell subsets.
+
+Event-level data and cell population memberships can easily be shared with collaborators.
+
+Quickly pushed to downstream analysis.
+    * MIMOSA (PMC3862207)
+    * COMPASS (http://rglab.github.org/COMPASS/)  
+
 <emph>We're usually pretty friendly and can help you get started</emph>
 
-## Summary {.smaller}
+## Summary 
 
-* OpenCyto is a <emph>framework</emph> for constructing standardized analysis pipelines for standardized assays.
-* Plugins allow any gating algorithm to be used for gating any cell pouplation (even high-dimensional gating, i.e. not just 1-D or 2-D) 
+* A <emph>framework</emph> for standardizing analysis pipelines.
+* <emph>Flexible</emph> support of different gating approaches via <emph>plugins</emph>
     * e.g  <emph>flowDensity</emph> is supported.
-* If the data coming off of an instrument are consistent, then an <emph>OpenCyto gating template can be reused</emph> for any data set using the same panel.
-     * Work is done up front to set up the template.
+* <emph>Re-usable templates and code</emph>
+     * Work is done up front for set up.
      * Fully reproducible and <emph>*objective, data-driven gating*</emph>.
-* Framework handles <emph>data manipulation</emph>.
-* With adequate SOP's in place, the analysis code can also be re-used.
-    * Code reads data, performs preprocessing, compensation, transformation, and gating using a template.
-    * Generates plots, writes out statistics, can perform analysis and QC.
-    * All this can be standardized with adequate SOPs (standard naming conventions, good use of Keywords, and so forth.)
+* <emph>OpenCyto simplifies</emph>
+    * Data import (raw data and/or manual gating from FlowJo workspace)
+    * Preprocessing
+    * Data manipulation (interacting with cell subsets)
+    * Plotting and visualization
+    * Extracting statistics for reports
+    * Downstream analysis with the full power of R's tools.
 
 <footer>www.isac-net.org</footer>
 
-## Online Resources
+## Online Resources  {.bigger}
 
 * OpenCyto website: http://opencyto.org
     * Documentation
@@ -462,21 +481,24 @@ Kmisc::htmlTable(hd)
 
 <footer>www.isac-net.org</footer>
 
-## Acknowledgements
-<div class="columns-2">
-*RGLab @ Fred Hutchinson Cancer Research Center*  
+## Acknowledgements {.columns-2 .lessbigger}
+
+<emph>*RGLab @ Fred Hutchinson Cancer Research Center*</emph>  
 **Raphael Gottardo**  
-Mike Jiang  
-Jacob Frelinger  
+**Mike Jiang**  
+**Jacob Frelinger**  
 *John Ramey*
 
+<emph>*Collaborators*</emph>    
+**Steve De Rosa** @ HIV Vaccine Trials Network    
+**Adam Asare** @ Immune Tolerance Network     
+**Evan Newell** @ Singapore Immunology Network   
+**Mark Davis** @ Stanford   
+**Adam Triester** @ TreeStar Inc.   
+**Jay Almarode** @ TreeStar Inc.    
 
-*Collaborators*  
-**Steve De Rosa** @ HVTN  
-**Adam Asare** @ ITN
-
-*Funding*  
+<emph>*Funding*  </emph>  
 National Institutes of Health  
-Human Immune Project Consortium
-</div>
+Human Immune Project Consortium (HIPC)
+
 <footer>www.isac-net.org</footer>
