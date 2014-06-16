@@ -32,7 +32,7 @@ output:
 * <emph>Scale to *large* data sets </emph>
     * HDF5 support - data sets limited by disk space not RAM.
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Overview {.smaller}
 
@@ -45,7 +45,7 @@ img<-readPNG("resources/Framework.png")
 grid.raster(img)
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Getting Started | Installation
 
@@ -69,7 +69,7 @@ Email: [Mike Jiang](wjiang2@fhcrc.org) or [Greg Finak](gfinak@fhcrc.org)
 Twitter: [\@OpenCyto](http://www.twitter.com/OpenCyto)
 </p>
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## A Worked Example | Intracellular Cytokine Staining of Antigen-stimulated T-cells 
 
@@ -102,7 +102,7 @@ Groups in Workspace
 4 0882 Samples          76
 </pre>
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Import Manual Gating (parseWorkspace) {.smaller}
 Create a gating set of manual gates.
@@ -134,7 +134,7 @@ To reload it, use 'load_gs' function
 </pre>  
 The archived gating set contains all the information on <emph>transformation, compensation, single-cell events, and gates</emph> and can be *shared with collaborators*.
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Visualizing the Gating Layout  (plotGate)   
 ```{r clean_manual,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
