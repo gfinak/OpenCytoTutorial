@@ -1,21 +1,17 @@
 ---
-title: "OpenCyto Tutorial<img src='resources/Cyto_logo_title.png', width='250px'><br><font size=6>Robust and Reproducible Automated Gating
-  of Cytometry Data<br>Cyto 2014</font>"
+title: "OpenCyto Tutorial<br><font
+  size=6>Robust and Reproducible Automated Gating of Cytometry Data<br>BioC 2014</font>"
 author: "Greg Finak, PhD<br>Staff Scientist<br>Vaccine and Infectious Disease Division,
   Fred Hutchinson Cancer Research Center"
-date: "May 17, 2014"
+date: "July, 2014"
 output:
   ioslides_presentation:
     fig_caption: yes
+    fig_retina: null
+    pandoc_args:
+    - -c
+    - mystyles.css
     widescreen: yes
-    pandoc_args: [
-      "-c", "mystyles.css",
-    ]
-  beamer_presentation:
-    fig_caption: yes
-    highlight: tango
-  revealjs_presentation:
-    highlight: tango
 ---
 
 ## What is OpenCyto? {.smaller}
@@ -115,7 +111,7 @@ Create a gating set of manual gates.
 ```
 ```{r parseWorkspace,echo=FALSE,results='hide',eval=TRUE}
 if(!file.exists("data/manual_gating/")){
-  gating_set<-parseWorkspace(ws,name="0882 Samples",path="data/FCS/",isNcdf=TRUE)
+  gating_set<-parseWorkspace(ws,name="0882 Samples",path="data/FCS/",isNcdf=TRUE,overwrite=TRUE)
   save_gs(gating_set,path="data/manual_gating")
 }else{
   gating_set<-load_gs("data/manual_gating/")
@@ -144,11 +140,11 @@ The archived gating set contains all the information on <emph>transformation, co
 ```{r clean_manual,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
 Rm("Not 4+",gating_set)
 ```
-```{r vis_manual_gates,echo=TRUE,eval=TRUE,results='hide',cache=TRUE,message=FALSE,warning=FALSE,fig.align='center',fig.cap='Layout of manual gates'}
+```{r vis_manual_gates,echo=TRUE,eval=TRUE,results='hide',cache=FALSE,message=FALSE,warning=FALSE,fig.align='center',fig.cap='Layout of manual gates'}
 plotGate(gating_set[[1]],xbin=16,gpar=list(ncol=5)) # Binning for faster plotting
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 
 ## Visualizing the Gating Tree  (plot)
@@ -157,7 +153,7 @@ Calling `plot` on the gating set gives us a view of the gating tree.
 ```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap=''}
 plot(gating_set)
 ```
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Annotation {.smaller}
 We <emph>annotate</emph> our gating set from the <emph>keywords</emph> and <emph>flowrepository</emph>. We'll keep only the <emph>GAG</emph> and <emph>negative control</emph> stimulations
@@ -180,11 +176,11 @@ setnames(pd,c("Timepoint","Individual"),c("VISITNO","PTID"))
 pData(gating_set)<-pd #annotate
 gating_subset<-gating_set[subset(pd,!is.na(Condition))$name] #subset only the GAG and negctrl
 ```
-```{r keywords_tbl,eval=TRUE,echo=FALSE,results='asis',cache=TRUE}
+```{r keywords_tbl,eval=TRUE,echo=FALSE,results='asis',cache=FALSE}
 knitr::kable(head(subset(na.omit(pd)[,c(1:5)],PTID%in%"080-17"),4),row.names = FALSE)
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Clone and save for automated gating {.smaller}
 We want to perform automated gating of this data.  
@@ -193,7 +189,7 @@ We want to perform automated gating of this data.
 ```{r copy_and_save,eval=FALSE,message=FALSE,warining=FALSE,results='hide'}
 auto_gating<-clone(gating_subset)
 Rm("S",auto_gating)
-save_gs(auto_gating,path="data/autogating")
+save_gs(auto_gating,path="data/autogating",overwrite=TRUE)
 ```
 ```{r load_empty,eval=TRUE,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 if(!file.exists("data/autogating")){
@@ -213,17 +209,17 @@ list.files("data/autogating")
 
 Send it to a friend, `load_gs()` will read it all in and the data will be available.
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Costructing a Template - I {.smaller}    
 
-```{r read_template,echo=FALSE,results='asis',cache=TRUE}
+```{r read_template,echo=FALSE,results='asis',cache=FALSE}
 template<-read.csv("data//template//gt_080.csv",as.is=FALSE,allowEscapes=TRUE,stringsAsFactors=FALSE)
 template$collapseDataForGating[is.na(template$collapseDataForGating)]<-" "
 Kmisc::htmlTable(data.frame(template)[1:8,c(1:6,8,9)],attr="width=100%")
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Costructing a Template - II {.smaller}
 Each row defines a cell population  
@@ -239,7 +235,7 @@ Each row defines a cell population
 * `preprocessing_method`: advanced use for some gating methods  
 * `preprocessing_args`: additional arguments  
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 
 ## Constructing a Template - III
@@ -249,7 +245,7 @@ gt<-gatingTemplate("data/template/gt_080.csv")
 plot(gt)
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Automated Gating   
 openCyto walks through the template and gates each population in each sample using the algoirthm named in the template.
@@ -268,6 +264,8 @@ setNode(auto_gating,"DebrisGate",FALSE)
 setNode(auto_gating,"cd4/cd57-/gzb_gate",FALSE)
 setNode(auto_gating,"cd4/cd57-/prf_gate",FALSE)
 setNode(auto_gating,"cd8/cd57-/gzb_gate",FALSE)
+setNode(auto_gating,"cd57-",FALSE)
+setNode(auto_gating,"cd4/cd57-",FALSE)
 setNode(auto_gating,"cd8/cd57-/prf_gate",FALSE)
 setNode(auto_gating,"cd4neg",FALSE)
 setNode(auto_gating,"cd4pos",FALSE)
@@ -277,23 +275,26 @@ setNode(auto_gating,"cd8-",FALSE)
 plot(auto_gating)
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Automated Gating - II  {.smaller}
 Ex. CD4 and CD8 populations  
-```{r compare_to_manual,echo=TRUE,fig.cap='Automated and Manual Gates for CD4/CD8',cache=TRUE,fig.align='center',fig.width=5,fig.height=2.5,out.width=600}
+```{r compare_to_manual,echo=TRUE,fig.cap='Automated and Manual Gates for CD4/CD8',cache=FALSE,fig.align='center',fig.width=5,fig.height=2.5,out.width=600}
 p1<-plotGate(auto_gating[[1]],c("cd8","cd4"),arrange=FALSE,
              projections=list("cd4"=c(x="CD8",y="CD4"),"cd8"=c(x="CD8",y="CD4")),
              main="Automated Gate",path=2)[[1]]
-p2<-plotGate(gating_subset[[1]],c("8+","4+"),arrange=FALSE,main="Manual Gate",path=2)[[1]]
+p2<-plotGate(gating_subset[[1]],c("8+","4+"),
+             projections=list("4+"=c(x="CD8",y="CD4"),"8+"=c(x="CD8",y="CD4")),
+             arrange=FALSE,main="Manual Gate",path=2)[[1]]
+
 grid.arrange(arrangeGrob(p1,p2,ncol=2))
 ```
 Stats and gates are comparable, could be tweaked if necessary, but importantly it's reproducible. Always generate the same result.
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Extract Stats and Compare Manual to Automated{.smaller}
-```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=TRUE,fig.align='center',out.width=800}
+```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=FALSE,fig.align='center',out.width=800}
 auto_stats<-getPopStats(auto_gating,statistic="count")
 manual_stats<-getPopStats(gating_subset,statistic="count")
 gates_to_remove<-names(which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="+"))>1)))
@@ -309,14 +310,15 @@ for(i in gates_to_remove){
   melted_manual<-melt(manual_stats)
   setnames(melted_manual,c("population","file","counts"))
   setnames(melted_auto,c("population","file","counts"))
-  melted_auto<-subset(melted_auto,!population%in%c("/boundary","/boundary/singlet/viable/nonNeutro","/boundary/singlet/viable/nonNeutro/DebrisGate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/prf_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd4/cd57-/gzb_gate","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+/cd4neg","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-/cd4pos","/boundary/singlet/viable/nonDebris","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8+","/boundary/singlet/viable/nonDebris/lymph/cd3/cd8-","/boundary/singlet" ))
+  melted_auto<-subset(melted_auto,!population%in%c("boundary","root"))
   melted_auto$population<-factor(melted_auto$population)
   
-  melted_manual<-subset(melted_manual,!population%in%c("/S/Lv/L/Not 4+","/S/Lv/L/3+/8+/IFN\\IL2","/S/Lv/L/3+/8+/IFN+IL2-","/S/Lv/L/3+/4+/IFN\\IL2","/S/Lv/L/3+/4+/IFN+IL2-","/S/Lv/L/3+/8+/IFN-IL2+","/S/Lv/L/3+/4+/IFN-IL2+","/S/Lv/L/3+/4+/Granzyme B-","/S/Lv/L/3+/8+/Granzyme B-"))
+  melted_manual<-subset(melted_manual,!population%in%c("4+/57-","4+/Granzyme B-","4+/IFN+IL2-","4+/IFN-IL2+","4+/IFN\\IL2","8+/57-","8+/Granzyme B-","8+/IFN+IL2-", "8+/IFN-IL2+" ,"8+/IFN\\IL2","root"))
   melted_manual$population<-factor(melted_manual$population)
-  D<-adist((levels(melted_auto$population)),(levels(melted_manual$population)),ignore.case=TRUE,partial=TRUE)
-  D<-solve_LSAP(D)
-  levels(melted_auto$population)<-levels(melted_manual$population)[D]
+  D<-adist((levels(melted_auto$population)),(levels(melted_manual$population)),ignore.case=TRUE,partial=FALSE)
+  D<-solve_LSAP(t(D))
+  data.frame(levels(melted_auto$population)[D],levels(melted_manual$population))
+  levels(melted_auto$population)[D]<-levels(melted_manual$population)
   merged<-rbind(cbind(melted_auto,method="auto"),cbind(melted_manual,method="manual"))
   merged
 }
@@ -340,11 +342,11 @@ manual_stats<-getPopStats(gating_subset,statistic="count")
 
 Note Perforin is incorrectly gated in the manual analysis. Minor differences at low end, but <emph>reproducible and objective</emph>.
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Perforin - Cytokine gate and reference gate{.smaller}
 
-```{r example_Perforin,echo=FALSE,eval=TRUE,fig.cap='Automated and Manual Gating of Perforin/CD8',cache=TRUE,fig.align='center',fig.width=7.5,fig.height=3.5,out.width=500}
+```{r example_Perforin,echo=FALSE,eval=TRUE,fig.cap='Automated and Manual Gating of Perforin/CD8',cache=FALSE,fig.align='center',fig.width=7.5,fig.height=3.5,out.width=500}
 p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],"cd8/Prf",default.y="<Alexa 680-A>",xbin=256,margin=FALSE,path=2,arrange=FALSE,main="Automated",xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5))[[1]]
 p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],"8+/Perforin+",default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5),arrange=FALSE,main="Manual")[[1]]
 grid.arrange(p1,p2,ncol=2)
@@ -369,17 +371,17 @@ abline(v=peaks)
 ```
 Automated gate set on CD57- (reference). Perforin-negative cells included in the manual gate. 
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## TNFa
 
-```{r example_TNFa,echo=FALSE,eval=TRUE,cache=TRUE,fig.cap="Automated and manual gating of TFNa",fig.align='center'}
+```{r example_TNFa,echo=FALSE,eval=TRUE,cache=FALSE,fig.cap="Automated and manual gating of TFNa",fig.align='center'}
 p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],c("cd8/TNFa","cd4/TNFa"),default.y="<PE Cy7-A>",xbin=256,margin=FALSE,path=2,arrange=FALSE,main="Automated",xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1))
 p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],c("8+/TNFa+","4+/TNFa+"),default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1),arrange=FALSE,main="Manual")
 do.call(grid.arrange,c(p1,p2,ncol=2))
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Some Useful Functions {.smaller}  
 Return a `flowSet` containing <emph>event-level data for the named cell population</emph>.
@@ -403,7 +405,7 @@ Register a <emph>new gating or preprocessing plugin</emph>.
 registerPlugins(myfunction,methodName,dependencies, "preprocessing"|"gating")
 ```
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Some More Useful Functions  {.smaller}
 <emph>Generate a Basic GatingTemplate from a Manual Gating Hierarchy</emph>.
@@ -417,7 +419,7 @@ Kmisc::htmlTable(hd)
 ```
 * Just fill in the `gating_method` and `dims` to get started.
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Some Typical Gating Methods Use Cases
 
@@ -430,7 +432,7 @@ Kmisc::htmlTable(hd)
 * `flowDensity`: Supported via plugin, density-based gating from our good friends at the BC Cancer Agency.
 * Other methods:  `rangeGate`, `quadrantGate`, `quantileGate` 
 
-<footer>www.isac-net.org</footer>
+<footer>www.biocondcutor.org</footer>
 
 ## Where we've used OpenCyto
 
@@ -467,7 +469,7 @@ Quickly pushed to downstream analysis.
     * Extracting statistics for reports
     * Downstream analysis with the full power of R's tools.
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Online Resources  {.bigger}
 
@@ -479,7 +481,7 @@ Quickly pushed to downstream analysis.
     * Code: http://www.github.com/gfinak/OpenCytoTutorial
 * The BioConductor website: http://www.bioconductor.org
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
 
 ## Acknowledgements {.columns-2 .lessbigger}
 
@@ -501,4 +503,4 @@ Quickly pushed to downstream analysis.
 National Institutes of Health  
 Human Immune Project Consortium (HIPC)
 
-<footer>www.isac-net.org</footer>
+<footer>www.bioconductor.org</footer>
