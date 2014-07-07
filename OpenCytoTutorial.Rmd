@@ -264,7 +264,7 @@ setNode(auto_gating,"DebrisGate",FALSE)
 setNode(auto_gating,"cd4/cd57-/gzb_gate",FALSE)
 setNode(auto_gating,"cd4/cd57-/prf_gate",FALSE)
 setNode(auto_gating,"cd8/cd57-/gzb_gate",FALSE)
-setNode(auto_gating,"cd57-",FALSE)
+setNode(auto_gating,"cd8/cd57-",FALSE)
 setNode(auto_gating,"cd4/cd57-",FALSE)
 setNode(auto_gating,"cd8/cd57-/prf_gate",FALSE)
 setNode(auto_gating,"cd4neg",FALSE)
@@ -297,8 +297,8 @@ Stats and gates are comparable, could be tweaked if necessary, but importantly i
 ```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=FALSE,fig.align='center',out.width=800}
 auto_stats<-getPopStats(auto_gating,statistic="count")
 manual_stats<-getPopStats(gating_subset,statistic="count")
-gates_to_remove<-names(which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="+"))>1)))
-gates_to_remove<-c(gates_to_remove,names(which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="-"))>1))))
+gates_to_remove<-rownames(manual_stats)[which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="+"))>1))]
+gates_to_remove<-c(gates_to_remove,rownames(manual_stats)[which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="-"))>1))],"/S/Lv/L/Not 4+","/S/Lv/L/3+/8+/Granzyme B-","/S/Lv/L/3+/8+/IFN\\IL2","/S/Lv/L/3+/4+/IFN\\IL2","/S/Lv/L/3+/8+/IFN+IL2-","/S/Lv/L/3+/4+/IFN+IL2-","/S/Lv/L/3+/8+/IFN-IL2+", "/S/Lv/L/3+/4+/Granzyme B-","4+/IFN-IL2+","/S/Lv/L/3+/8+/57-", "/S/Lv/L/3+/4+/57-"  )
 for(i in gates_to_remove){
   try(Rm(i,gating_subset))
 }
