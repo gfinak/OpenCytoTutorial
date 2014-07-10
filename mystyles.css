@@ -87,7 +87,7 @@ footer {
     bottom: 2px;
     left: 2px;
     color: black;
-    position: fixed;
+    position: absolute;
     right: 0;
     font-size: 12px;
     text-align: left;

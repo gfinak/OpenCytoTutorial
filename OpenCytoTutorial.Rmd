@@ -71,6 +71,16 @@ Twitter: [\@OpenCyto](http://www.twitter.com/OpenCyto)
 
 <footer>www.bioconductor.org</footer>
 
+## Getting Started II
+*Alternately* if you are brave and want the latest bug fixes and features - *github.com/RGLab*
+
+```{r eval=FALSE}
+require(devtools)
+packages<-c("RGLab/flowStats","RGLab/flowCore","RGLab/flowViz","RGLab/ncdfFlow","RGLab/flowWorkspace","RGLab/openCyto")
+install_github(packages,quick=TRUE)
+```
+You may use the *devtools* package to install the latest stable versions directly from github.
+
 ## A Worked Example | Intracellular Cytokine Staining of Antigen-stimulated T-cells 
 
 * Full data set at Flowrepository.org [FR-FCM-ZZ7U](http://flowrepository.org/experiments/254/public_id)  
@@ -145,7 +155,6 @@ plotGate(gating_set[[1]],xbin=16,gpar=list(ncol=5)) # Binning for faster plottin
 ```
 
 <footer>www.bioconductor.org</footer>
-
 
 ## Visualizing the Gating Tree  (plot)
 
@@ -278,7 +287,6 @@ plot(auto_gating)
 <footer>www.bioconductor.org</footer>
 
 ## Automated Gating - II  {.smaller}
-Ex. CD4 and CD8 populations  
 ```{r compare_to_manual,echo=TRUE,fig.cap='Automated and Manual Gates for CD4/CD8',cache=FALSE,fig.align='center',fig.width=5,fig.height=2.5,out.width=600}
 p1<-plotGate(auto_gating[[1]],c("cd8","cd4"),arrange=FALSE,
              projections=list("cd4"=c(x="CD8",y="CD4"),"cd8"=c(x="CD8",y="CD4")),
@@ -300,7 +308,7 @@ manual_stats<-getPopStats(gating_subset,statistic="count")
 gates_to_remove<-rownames(manual_stats)[which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="+"))>1))]
 gates_to_remove<-c(gates_to_remove,rownames(manual_stats)[which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="-"))>1))],"/S/Lv/L/Not 4+","/S/Lv/L/3+/8+/Granzyme B-","/S/Lv/L/3+/8+/IFN\\IL2","/S/Lv/L/3+/4+/IFN\\IL2","/S/Lv/L/3+/8+/IFN+IL2-","/S/Lv/L/3+/4+/IFN+IL2-","/S/Lv/L/3+/8+/IFN-IL2+", "/S/Lv/L/3+/4+/Granzyme B-","4+/IFN-IL2+","/S/Lv/L/3+/8+/57-", "/S/Lv/L/3+/4+/57-"  )
 for(i in gates_to_remove){
-  try(Rm(i,gating_subset))
+  try(Rm(i,gating_subset),silent=TRUE)
 }
 .getCounts<-function(stat="count"){
   auto_stats<-getPopStats(auto_gating,statistic=stat)
@@ -417,7 +425,7 @@ hd<-head(data.frame(templateGen(gating_subset[[1]])),7)
 hd[is.na(hd)]<-""
 Kmisc::htmlTable(hd)
 ```
-* Just fill in the `gating_method` and `dims` to get started.
+Just fill in the `gating_method` and `dims` to get started.
 
 <footer>www.bioconductor.org</footer>
 
@@ -434,6 +442,40 @@ Kmisc::htmlTable(hd)
 
 <footer>www.biocondcutor.org</footer>
 
+## Your turn
+
+Under `/data/OpenCyto` you'll find the data and some R code to reproduce the analysis in these slides. Begin there.  
+
+- Copy the code to your home directory and work from there.   
+- Paths are set up to write to your home directory.  
+- Load the workspace and reproduce the manual gating.  
+- Clone the gating set and clear the manual gates.   
+- Load the template and run the automated gating.  
+
+## Gating Method Examples - mindensity {.smaller}
+Infers a gate threshold based on the minimum density separating two major populations in a 1-D density estimate.
+
+- Open the `csv` template in a new window, the definition for the live/dead gate is:
+
+`viable, viable-, singlet, AViD, mindensity, gate_range=c(500,1000)`  
+`gate_range` restricts the data region where the method searches for a cutpoint.  
+`adjust` alters the smoothing (larger value = more smoothing, less *bumpy*)
+
+- Play with these parameters in the gating template.
+    - What happens if you remove the `gate_range` parameter?
+    - What happens if you set `adjust=0.75`?  
+```{r echo=TRUE,eval=FALSE}
+# Work with a subset of the data
+auto_subset<-auto_gating[1:20] # first 20 samples
+# Make changes in the template. SAVE it, then re-load it in R.
+gt<-gatingTemplate("data/template/gt_080.csv")
+# Remove the old gate from auto_gating
+Rm("viable",auto_subset)
+# Gate with the new template, stop after the viable gate (which is nonNeutro)
+gating(gt,auto_subset,stop.at="nonNeutro")
+# View the new result
+plotGate(auto_subset,"viable")
+```
 ## Where we've used OpenCyto
 
 <emph>Studies wtih 100s of GB of data.</emp>   
@@ -482,6 +524,15 @@ Quickly pushed to downstream analysis.
 * The BioConductor website: http://www.bioconductor.org
 
 <footer>www.bioconductor.org</footer>
+
+## Next steps {.smaller}
+Time to dive in and try using the framework.
+- We've provided the data for this tutorial, as well as the code to generate these slides.
+- Step through the code.. some things are not exactly as simple as presented here.
+    - Annotating the data appropriately can sometimes take a bit of work
+        - People running the cytometer or using FlowJo don't always annotate their data 
+    - 
+
 
 ## Acknowledgements {.columns-2 .lessbigger}
 
