@@ -451,6 +451,8 @@ Under `/data/OpenCyto` you'll find the data and some R code to reproduce the ana
 - Load the workspace and reproduce the manual gating.  
 - Clone the gating set and clear the manual gates.   
 - Load the template and run the automated gating.  
+- Open up the OpenCytoPracticalComponent document and work through that. 
+- Play with the gating parameters to see what effect they have.
 
 ## Gating Method Examples - mindensity {.smaller}
 Infers a gate threshold based on the minimum density separating two major populations in a 1-D density estimate.
@@ -464,6 +466,7 @@ Infers a gate threshold based on the minimum density separating two major popula
 - Play with these parameters in the gating template.
     - What happens if you remove the `gate_range` parameter?
     - What happens if you set `adjust=0.75`?  
+    
 ```{r echo=TRUE,eval=FALSE}
 # Work with a subset of the data
 auto_subset<-auto_gating[1:20] # first 20 samples
@@ -476,6 +479,7 @@ gating(gt,auto_subset,stop.at="nonNeutro")
 # View the new result
 plotGate(auto_subset,"viable")
 ```
+
 ## Where we've used OpenCyto
 
 <emph>Studies wtih 100s of GB of data.</emp>   
@@ -489,9 +493,9 @@ plotGate(auto_subset,"viable")
 
 Event-level data and cell population memberships can easily be shared with collaborators.
 
-Quickly pushed to downstream analysis.
-    * MIMOSA (PMC3862207)
-    * COMPASS (http://rglab.github.org/COMPASS/)  
+Quickly pushed to downstream analysis.  
+    * MIMOSA (PMC3862207)     
+    * COMPASS (http://rglab.github.org/COMPASS/)    
 
 <emph>We're usually pretty friendly and can help you get started</emph>
 
@@ -524,14 +528,6 @@ Quickly pushed to downstream analysis.
 * The BioConductor website: http://www.bioconductor.org
 
 <footer>www.bioconductor.org</footer>
-
-## Next steps {.smaller}
-Time to dive in and try using the framework.
-- We've provided the data for this tutorial, as well as the code to generate these slides.
-- Step through the code.. some things are not exactly as simple as presented here.
-    - Annotating the data appropriately can sometimes take a bit of work
-        - People running the cytometer or using FlowJo don't always annotate their data 
-    - 
 
 
 ## Acknowledgements {.columns-2 .lessbigger}
