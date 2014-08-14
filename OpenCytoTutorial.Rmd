@@ -32,7 +32,7 @@ output:
 * <emph>Scale to *large* data sets </emph>
     * HDF5 support - data sets limited by disk space not RAM.
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Overview {.smaller}
 
@@ -46,7 +46,7 @@ img<-readPNG("resources/Framework.png")
 grid.raster(img)
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Getting Started | Installation
 
@@ -70,7 +70,7 @@ Email: [Mike Jiang](wjiang2@fhcrc.org) or [Greg Finak](gfinak@fhcrc.org)
 Twitter: [\@OpenCyto](http://www.twitter.com/OpenCyto)
 </p>
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Getting Started II
 *Alternately* if you are brave and want the latest bug fixes and features - *github.com/RGLab*
@@ -113,7 +113,7 @@ Groups in Workspace
 4 0882 Samples          76
 </pre>
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Import Manual Gating (parseWorkspace) {.smaller}
 Create a gating set of manual gates.
@@ -145,7 +145,7 @@ To reload it, use 'load_gs' function
 </pre>  
 The archived gating set contains all the information on <emph>transformation, compensation, single-cell events, and gates</emph> and can be *shared with collaborators*.
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Visualizing the Gating Layout  (plotGate)   
 ```{r clean_manual,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
@@ -155,7 +155,7 @@ Rm("Not 4+",gating_set)
 plotGate(gating_set[[1]],xbin=16,gpar=list(ncol=5)) # Binning for faster plotting
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Visualizing the Gating Tree  (plot)
 
@@ -163,7 +163,7 @@ Calling `plot` on the gating set gives us a view of the gating tree.
 ```{r plot_manual_tree,echo=2,results="hide",message=FALSE,warning=FALSE,fig.cap=''}
 plot(gating_set)
 ```
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Annotation {.smaller}
 We <emph>annotate</emph> our gating set from the <emph>keywords</emph> and <emph>flowrepository</emph>. We'll keep only the <emph>GAG</emph> and <emph>negative control</emph> stimulations
@@ -190,7 +190,7 @@ gating_subset<-gating_set[subset(pd,!is.na(Condition))$name] #subset only the GA
 knitr::kable(head(subset(na.omit(pd)[,c(1:5)],PTID%in%"080-17"),4),row.names = FALSE)
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Clone and save for automated gating {.smaller}
 We want to perform automated gating of this data.  
@@ -219,7 +219,7 @@ list.files("data/autogating")
 
 Send it to a friend, `load_gs()` will read it all in and the data will be available.
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Costructing a Template - I {.smaller}    
 
@@ -229,7 +229,7 @@ template$collapseDataForGating[is.na(template$collapseDataForGating)]<-" "
 Kmisc::htmlTable(data.frame(template)[1:8,c(1:6,8,9)],attr="width=100%")
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Costructing a Template - II {.smaller}
 Each row defines a cell population  
@@ -245,7 +245,7 @@ Each row defines a cell population
 * `preprocessing_method`: advanced use for some gating methods  
 * `preprocessing_args`: additional arguments  
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 
 ## Constructing a Template - III
@@ -255,7 +255,7 @@ gt<-gatingTemplate("data/template/gt_080.csv")
 plot(gt)
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Automated Gating   
 openCyto walks through the template and gates each population in each sample using the algoirthm named in the template.
@@ -285,7 +285,7 @@ setNode(auto_gating,"cd8-",FALSE)
 plot(auto_gating)
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Automated Gating - II  {.smaller}
 ```{r compare_to_manual,echo=TRUE,fig.cap='Automated and Manual Gates for CD4/CD8',cache=FALSE,fig.align='center',fig.width=5,fig.height=2.5,out.width=600}
@@ -300,7 +300,7 @@ grid.arrange(arrangeGrob(p1,p2,ncol=2))
 ```
 Stats and gates are comparable, could be tweaked if necessary, but importantly it's reproducible. Always generate the same result.
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Extract Stats and Compare Manual to Automated{.smaller}
 ```{r extract_stats,echo=FALSE,message=FALSE, warning=FALSE,error=FALSE,results='hide',fig.cap='Comparison of Manual vs Automated Gating Cell Subset Counts',fig.width=12,fig.height=5,cache=FALSE,fig.align='center',out.width=800}
@@ -351,7 +351,7 @@ manual_stats<-getPopStats(gating_subset,statistic="count")
 
 Note Perforin is incorrectly gated in the manual analysis. Minor differences at low end, but <emph>reproducible and objective</emph>.
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Perforin - Cytokine gate and reference gate{.smaller}
 
@@ -380,7 +380,7 @@ abline(v=peaks)
 ```
 Automated gate set on CD57- (reference). Perforin-negative cells included in the manual gate. 
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## TNFa
 
@@ -390,7 +390,7 @@ p2<-plotGate(gating_set[[sampleNames(gating_subset)[7]]],c("8+/TNFa+","4+/TNFa+"
 do.call(grid.arrange,c(p1,p2,ncol=2))
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Some Useful Functions {.smaller}  
 Return a `flowSet` containing <emph>event-level data for the named cell population</emph>.
@@ -414,7 +414,7 @@ Register a <emph>new gating or preprocessing plugin</emph>.
 registerPlugins(myfunction,methodName,dependencies, "preprocessing"|"gating")
 ```
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Some More Useful Functions  {.smaller}
 <emph>Generate a Basic GatingTemplate from a Manual Gating Hierarchy</emph>.
@@ -428,7 +428,7 @@ Kmisc::htmlTable(hd)
 ```
 Just fill in the `gating_method` and `dims` to get started.
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Some Typical Gating Methods Use Cases
 
@@ -478,7 +478,7 @@ Quickly pushed to downstream analysis.
     * Extracting statistics for reports
     * Downstream analysis with the full power of R's tools.
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 ## Online Resources  {.bigger}
 
@@ -490,7 +490,7 @@ Quickly pushed to downstream analysis.
     * Code: http://www.github.com/gfinak/OpenCytoTutorial
 * The BioConductor website: http://www.bioconductor.org
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 
 ## Acknowledgements {.columns-2 .lessbigger}
@@ -513,7 +513,7 @@ Quickly pushed to downstream analysis.
 National Institutes of Health  
 Human Immune Project Consortium (HIPC)
 
-<footer>www.bioconductor.org</footer>
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
 
 ## Heatmap of Antigen-producing Cell Population Proportions
@@ -528,6 +528,28 @@ rownames(M)<-M[,1]
 M<-as.matrix(M[,-1L])
 COMPASS::pheatmap(t(M))
 ```
+<footer>Fred Hutchinson Cancer Research Center</footer>
+
+## Heatmap code
+```{r heatmap_code,echo=TRUE,eval=FALSE}
+#Get the autogating stats and combine with annotations on samples
+auto_stats<-melt(getPopStats(auto_gating))
+setnames(auto_stats,c("population","name","value"))
+pd<-pData(auto_gating)
+auto_stats<-merge(pd,auto_stats,by="name",all.y=TRUE)
+#Some reshaping and filtering to include only CD4 and CD8 subsets 
+#of cytokine producing cells, and only Pol, Gag, 
+#and negative controls
+M<-dcast(subset(auto_stats,(population%like%"cd4/.*$"|population%like%"cd8/.*$")&
+                  !Stim%in%c("CMV","sebctrl")&!population%like%c("cd57")&!population%like%"GzB"&
+                  !population%like%"Prf"),population~PTID+VISITNO+Stim,fun.aggregate=mean)
+rownames(M)<-M[,1]
+M<-as.matrix(M[,-1L])
+#Heatmap
+COMPASS::pheatmap(t(M))
+```
+<footer>Fred Hutchinson Cancer Research Center</footer>
+
 
 ## Constructing a Compensation Matrix From FCS Files {.smaller}
 
@@ -548,7 +570,7 @@ sampleNames(comp_controls)<-c(comp_annotation$name,"Unst 1","Unst 2")
 ord<-order(match(comp_annotation$name,pData(parameters(comp_controls[[1]]))$name))
 comp_controls<-comp_controls[c(ord,11)]
 #Compute a spillover matrix, supplying the unstained control, the forward and side scatter, and a pattern for the channels to compensate
-spill<-spillover(x=comp_controls,unstained="Unst 1",fsc="FSC-A",ssc="SSC-A",useNormFilt=TRUE,pregate=FALSE,stain_match="order",patt=paste(sampleNames(comp_controls)[-11],collapse="|"),method="median")
+spill<-spillover(x=comp_controls,unstained="Unst 1",fsc="FSC-A",ssc="SSC-A",useNormFilt=TRUE,pregate=FALSE,stain_match="order",patt=paste(sampleNames(comp_controls)[-11],collapse="|"),method="mean")
 #Build a compensation object
 comp_object<-compensation(spill)
 #Get a few sample files
@@ -566,4 +588,54 @@ fs_trans<-trans%on%fs
 xyplot(`PE Tx RD-A`~`APC Cy7-A`,fs_trans,smooth=FALSE,xbin=32)
 #Now read in all your sample files and compensate and transform them with the above
 ```
+<footer>Fred Hutchinson Cancer Research Center</footer>
 
+## Compensation step by step
+```{r comp_step_by_step, eval=FALSE, echo=TRUE }
+#Get the compensation controls
+compensation_controls<-subset(getSamples(ws),sampleID%in%subset(getSampleGroups(ws),
+                   groupName%in%"Comps")$sampleID)$name
+#Read them into a flowSet
+comp_controls<-read.flowSet(file.path("data","FCS",compensation_controls))[-3]
+#Grab the annotations from the keywords
+comp_annotation<-ldply(fsApply(comp_controls,function(x)na.omit(pData(parameters(x))[,c("name","desc")])))
+#Rename the samples to the stained channel
+sampleNames(comp_controls)<-c(comp_annotation$name,"Unst 1","Unst 2")
+#Determine the order of the channels to reorder the files
+ord<-order(match(comp_annotation$name,pData(parameters(comp_controls[[1]]))$name))
+comp_controls<-comp_controls[c(ord,11)]
+#Compute a spillover matrix, supplying the unstained control,
+#the forward and side scatter, and a pattern for the channels to compensate
+spill<-spillover(x=comp_controls,unstained="Unst 1",fsc="FSC-A",ssc="SSC-A",
+        useNormFilt=TRUE,pregate=FALSE,stain_match="order",
+        patt=paste(sampleNames(comp_controls)[-11],collapse="|"),method="mean")
+#Build a compensation object
+comp_object<-compensation(spill)
+```
+<footer>Fred Hutchinson Cancer Research Center</footer>
+
+## Transformation step by step
+```{r transformation_step_by_step,eval=FALSE,echo=TRUE}
+#Get a few sample files
+sample_files<-sample(subset(getSamples(ws),sampleID%in%subset(getSampleGroups(ws),
+              groupName%in%"0882 Samples")$sampleID)$name,5)
+#Read them into a flowSet
+fs<-read.flowSet(sample_files,path = "data/FCS")
+#Compensate them
+fs_comp<-compensate(fs,comp_object)
+#Merge them into one flowFrame
+fs_merge<-flowFrame(fsApply(fs_comp,exprs))
+#Estimate the parameters of the logicle transformation based on the merged data
+trans<-estimateLogicle(fs_merge,channels=sampleNames(comp_controls)[-11])
+#Transform the data
+fs_trans<-trans%on%fs
+xyplot(`PE Tx RD-A`~`APC Cy7-A`,fs_trans,smooth=FALSE,xbin=32)
+#Now read in all your sample files and compensate and transform them with the above
+```
+<footer>Fred Hutchinson Cancer Research Center</footer>
+
+## Compensation and Transformation Summary
+- Easier if you already have a compensation matrix
+- Easiest if you're importing data from FlowJo, for example
+- Scales of the transformed parameters will differ between FlowJo ("channel space"), and R (logicle scale).
+    - Template arguments will have to change depending on the above (i.e. gate range etc.)
