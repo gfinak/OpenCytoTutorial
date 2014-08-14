@@ -41,6 +41,7 @@ output:
 ```{r framework_figure, echo=FALSE,fig.cap='The OpenCyto Gating Framework is a collection of R/BioConductor packages for easily building reproducible flow data analysis pipelines.',message=FALSE,fig.align='center',fig.width=8,cache=TRUE}
 require(png)
 require(grid)
+require(gplots)
 img<-readPNG("resources/Framework.png")
 grid.raster(img)
 ```
@@ -202,9 +203,9 @@ save_gs(auto_gating,path="data/autogating",overwrite=TRUE)
 ```
 ```{r load_empty,eval=TRUE,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 if(!file.exists("data/autogating")){
-  auto_gating<-clone(gating_subset)
+  auto_gating<-clone(gating_set)
   try(Rm("S",auto_gating))
-  save_gs(auto_gating,path="data/autogating")
+  save_gs(auto_gating,path="data/autogating",overwrite=TRUE)
 }else{
   auto_gating<-load_gs("data/autogating/")
 }
@@ -266,7 +267,7 @@ plot(auto_gating)
 ```{r plot_autogate_tree,echo=FALSE,message=FALSE,warning=FALSE,fig.align='center',out.width=600,results='hide'}
 if(length(getNodes(auto_gating))<1){
   gating(x = gt, y =  auto_gating)
-  save_gs(auto_gating,path="data//autogating",overwrite = TRUE)
+  save_gs(auto_gating,path="data/autogating",overwrite = TRUE)
 }
 setNode(auto_gating,"nonNeutro",FALSE)
 setNode(auto_gating,"DebrisGate",FALSE)
@@ -308,7 +309,7 @@ manual_stats<-getPopStats(gating_subset,statistic="count")
 gates_to_remove<-rownames(manual_stats)[which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="+"))>1))]
 gates_to_remove<-c(gates_to_remove,rownames(manual_stats)[which(sapply(basename(rownames(manual_stats)),function(x)length(which(strsplit(x,"")[[1]]=="-"))>1))],"/S/Lv/L/Not 4+","/S/Lv/L/3+/8+/Granzyme B-","/S/Lv/L/3+/8+/IFN\\IL2","/S/Lv/L/3+/4+/IFN\\IL2","/S/Lv/L/3+/8+/IFN+IL2-","/S/Lv/L/3+/4+/IFN+IL2-","/S/Lv/L/3+/8+/IFN-IL2+", "/S/Lv/L/3+/4+/Granzyme B-","4+/IFN-IL2+","/S/Lv/L/3+/8+/57-", "/S/Lv/L/3+/4+/57-"  )
 for(i in gates_to_remove){
-  try(Rm(i,gating_subset),silent=TRUE)
+  try(Rm(i,gating_set),silent=TRUE)
 }
 .getCounts<-function(stat="count"){
   auto_stats<-getPopStats(auto_gating,statistic=stat)
@@ -356,7 +357,7 @@ Note Perforin is incorrectly gated in the manual analysis. Minor differences at 
 
 ```{r example_Perforin,echo=FALSE,eval=TRUE,fig.cap='Automated and Manual Gating of Perforin/CD8',cache=FALSE,fig.align='center',fig.width=7.5,fig.height=3.5,out.width=500}
 p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],"cd8/Prf",default.y="<Alexa 680-A>",xbin=256,margin=FALSE,path=2,arrange=FALSE,main="Automated",xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5))[[1]]
-p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],"8+/Perforin+",default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5),arrange=FALSE,main="Manual")[[1]]
+p2<-plotGate(gating_set[[sampleNames(gating_subset)[7]]],"8+/Perforin+",default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.5),ylab=list(cex=1.5),scales=list(cex=1.5),par.strip.text=list(cex=1.5),arrange=FALSE,main="Manual")[[1]]
 grid.arrange(p1,p2,ncol=2)
 ```
 ```{r example_derivative_gate,echo=FALSE,eval=TRUE,fig.align='center',out.width=500,fig.width=7.5,fig.height=3.5}
@@ -385,7 +386,7 @@ Automated gate set on CD57- (reference). Perforin-negative cells included in the
 
 ```{r example_TNFa,echo=FALSE,eval=TRUE,cache=FALSE,fig.cap="Automated and manual gating of TFNa",fig.align='center'}
 p1<-plotGate(auto_gating[[sampleNames(gating_subset)[7]]],c("cd8/TNFa","cd4/TNFa"),default.y="<PE Cy7-A>",xbin=256,margin=FALSE,path=2,arrange=FALSE,main="Automated",xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1))
-p2<-plotGate(gating_subset[[sampleNames(gating_subset)[7]]],c("8+/TNFa+","4+/TNFa+"),default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1),arrange=FALSE,main="Manual")
+p2<-plotGate(gating_set[[sampleNames(gating_subset)[7]]],c("8+/TNFa+","4+/TNFa+"),default.y="<Pacific Blue-A>",xbin=256,margin=FALSE,path=2,xlab=list(cex=1.1),ylab=list(cex=1.1),scales=list(cex=1.1),par.strip.text=list(cex=1.1),arrange=FALSE,main="Manual")
 do.call(grid.arrange,c(p1,p2,ncol=2))
 ```
 
@@ -441,44 +442,6 @@ Just fill in the `gating_method` and `dims` to get started.
 * Other methods:  `rangeGate`, `quadrantGate`, `quantileGate` 
 
 <footer>www.biocondcutor.org</footer>
-
-## Your turn
-
-Under `/data/OpenCyto` you'll find the data and some R code to reproduce the analysis in these slides. Begin there.  
-
-- Copy the code to your home directory and work from there.   
-- Paths are set up to write to your home directory.  
-- Load the workspace and reproduce the manual gating.  
-- Clone the gating set and clear the manual gates.   
-- Load the template and run the automated gating.  
-- Open up the OpenCytoPracticalComponent document and work through that. 
-- Play with the gating parameters to see what effect they have.
-
-## Gating Method Examples - mindensity {.smaller}
-Infers a gate threshold based on the minimum density separating two major populations in a 1-D density estimate.
-
-- Open the `csv` template in a new window, the definition for the live/dead gate is:
-
-`viable, viable-, singlet, AViD, mindensity, gate_range=c(500,1000)`  
-`gate_range` restricts the data region where the method searches for a cutpoint.  
-`adjust` alters the smoothing (larger value = more smoothing, less *bumpy*)
-
-- Play with these parameters in the gating template.
-    - What happens if you remove the `gate_range` parameter?
-    - What happens if you set `adjust=0.75`?  
-    
-```{r echo=TRUE,eval=FALSE}
-# Work with a subset of the data
-auto_subset<-auto_gating[1:20] # first 20 samples
-# Make changes in the template. SAVE it, then re-load it in R.
-gt<-gatingTemplate("data/template/gt_080.csv")
-# Remove the old gate from auto_gating
-Rm("viable",auto_subset)
-# Gate with the new template, stop after the viable gate (which is nonNeutro)
-gating(gt,auto_subset,stop.at="nonNeutro")
-# View the new result
-plotGate(auto_subset,"viable")
-```
 
 ## Where we've used OpenCyto
 
@@ -551,3 +514,56 @@ National Institutes of Health
 Human Immune Project Consortium (HIPC)
 
 <footer>www.bioconductor.org</footer>
+
+
+## Heatmap of Antigen-producing Cell Population Proportions
+
+```{r heatmap,echo=FALSE,result='hide'}
+auto_stats<-melt(getPopStats(auto_gating))
+setnames(auto_stats,c("population","name","value"))
+pd<-pData(auto_gating)
+auto_stats<-merge(pd,auto_stats,by="name",all.y=TRUE)
+M<-dcast(subset(auto_stats,(population%like%"cd4/.*$"|population%like%"cd8/.*$")&!Stim%in%c("CMV","sebctrl")&!population%like%c("cd57")&!population%like%"GzB"&!population%like%"Prf"),population~PTID+VISITNO+Stim,fun.aggregate=mean)
+rownames(M)<-M[,1]
+M<-as.matrix(M[,-1L])
+COMPASS::pheatmap(t(M))
+```
+
+## Constructing a Compensation Matrix From FCS Files {.smaller}
+
+```{r comp_and_transform,echo=FALSE,eval=TRUE,warning=FALSE}
+suppressPackageStartupMessages({
+  require(plyr)
+  require(flowCore)
+  })
+#Get the compensation controls
+compensation_controls<-subset(getSamples(ws),sampleID%in%subset(getSampleGroups(ws),groupName%in%"Comps")$sampleID)$name
+#Read them into a flowSet
+comp_controls<-read.flowSet(file.path("data","FCS",compensation_controls))[-3]
+#Grab the annotations from the keywords
+comp_annotation<-ldply(fsApply(comp_controls,function(x)na.omit(pData(parameters(x))[,c("name","desc")])))
+#Rename the samples to the stained channel
+sampleNames(comp_controls)<-c(comp_annotation$name,"Unst 1","Unst 2")
+#Determine the order of the channels to reorder the files
+ord<-order(match(comp_annotation$name,pData(parameters(comp_controls[[1]]))$name))
+comp_controls<-comp_controls[c(ord,11)]
+#Compute a spillover matrix, supplying the unstained control, the forward and side scatter, and a pattern for the channels to compensate
+spill<-spillover(x=comp_controls,unstained="Unst 1",fsc="FSC-A",ssc="SSC-A",useNormFilt=TRUE,pregate=FALSE,stain_match="order",patt=paste(sampleNames(comp_controls)[-11],collapse="|"),method="median")
+#Build a compensation object
+comp_object<-compensation(spill)
+#Get a few sample files
+sample_files<-sample(subset(getSamples(ws),sampleID%in%subset(getSampleGroups(ws),groupName%in%"0882 Samples")$sampleID)$name,5)
+#Read them into a flowSet
+fs<-read.flowSet(sample_files,path = "data/FCS")
+#Compensate them
+fs_comp<-compensate(fs,comp_object)
+#Merge them into one flowFrame
+fs_merge<-flowFrame(fsApply(fs_comp,exprs))
+#Estimate the parameters of the logicle transformation based on the merged data
+trans<-estimateLogicle(fs_merge,channels=sampleNames(comp_controls)[-11])
+#Transform the data
+fs_trans<-trans%on%fs
+xyplot(`PE Tx RD-A`~`APC Cy7-A`,fs_trans,smooth=FALSE,xbin=32)
+#Now read in all your sample files and compensate and transform them with the above
+```
+
